@@ -1073,6 +1073,7 @@ except Exception:
 
 if go_param == "home":
     st.session_state.pantalla = "home"
+    st.session_state["_from_landing"] = True
     try:
         st.query_params.clear()
     except Exception:
@@ -1176,13 +1177,6 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
 }
 </style>""", unsafe_allow_html=True)
 
-    # Botón real de Streamlit (totalmente invisible — activado por JS)
-    st.markdown('<div id="nx-real-cta" style="position:absolute;width:0;height:0;overflow:hidden;clip:rect(0,0,0,0);border:0;padding:0;margin:0;">', unsafe_allow_html=True)
-    if st.button("Iniciar triaje", key="btn_landing_start", type="primary"):
-        st.session_state["_from_landing"] = True
-        ir("home")
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # Landing fullscreen — inyectado como overlay position:fixed en el documento padre
     components.html("""<script>
 (function(){
@@ -1282,18 +1276,13 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
   doc.body.appendChild(ov);
 
   ov.querySelector('#nx-go').onclick = function() {
-    ov.style.transition = 'opacity .25s';
+    ov.style.transition = 'opacity .3s';
     ov.style.opacity = '0';
     setTimeout(function() {
-      ov.remove();
-      doc.getElementById('nx-landing-css') && doc.getElementById('nx-landing-css').remove();
-      var realBtn = doc.querySelector('#nx-real-cta button');
-      if (realBtn) {
-        ['mousedown','mouseup','click'].forEach(function(t) {
-          realBtn.dispatchEvent(new MouseEvent(t, {bubbles:true, cancelable:true}));
-        });
-      }
-    }, 250);
+      // Navegar a ?go=home — Python lo detecta y cambia la pantalla
+      var loc = window.parent.location;
+      window.parent.location.href = loc.pathname + '?go=home';
+    }, 300);
   };
 
   setTimeout(function() {
