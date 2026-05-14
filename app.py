@@ -1061,7 +1061,6 @@ _DEF = {
     "centros":          None,
     "coords_busq":      None,
     "ubicacion_busq":   "",
-    "feedback_dado":    False,
 }
 for k, v in _DEF.items():
     if k not in st.session_state:
@@ -2549,31 +2548,15 @@ elif st.session_state.pantalla == "resultado":
     _qr_img.save(_qr_buf, format="PNG")
     _qr_b64 = base64.b64encode(_qr_buf.getvalue()).decode()
     st.markdown(f"""
-<!-- Modal QR -->
-<div id="nx-qr-modal" onclick="this.style.display='none'"
-  style="display:none;position:fixed;inset:0;z-index:99999;
-    background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
-    align-items:center;justify-content:center;cursor:zoom-out;">
-  <div style="background:#0d1e38;border:2px solid rgba(61,142,248,.4);
-    border-radius:20px;padding:28px;text-align:center;
-    animation:popIn .3s cubic-bezier(.22,.68,0,1.2) both;">
-    <img src="data:image/png;base64,{_qr_b64}" width="260" height="260"
-      style="border-radius:12px;display:block;" alt="QR grande"/>
-    <div style="font-size:.8rem;color:#7a95b8;margin-top:14px;">
-      Toca en cualquier parte para cerrar</div>
-  </div>
-</div>
-
 <div style="display:flex;align-items:center;gap:12px;
   background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
   padding:9px 16px;margin-bottom:8px;">
-  <img src="data:image/png;base64,{_qr_b64}" width="54" height="54"
-    onclick="var m=document.getElementById('nx-qr-modal');m.style.display='flex';"
+  <img id="nx-qr-thumb" src="data:image/png;base64,{_qr_b64}" width="54" height="54"
     style="border-radius:7px;flex-shrink:0;cursor:zoom-in;
-      transition:transform .2s;box-shadow:0 0 0 0 rgba(61,142,248,.4);"
-    onmouseover="this.style.transform='scale(1.08)';this.style.boxShadow='0 0 0 3px rgba(61,142,248,.4)'"
+      transition:transform .18s,box-shadow .18s;"
+    onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 0 0 3px rgba(61,142,248,.5)'"
     onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'"
-    alt="QR informe — clic para ampliar"/>
+    alt="QR informe"/>
   <div>
     <div style="font-size:.68rem;font-weight:700;color:var(--txt3);
       text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
@@ -2582,6 +2565,56 @@ elif st.session_state.pantalla == "resultado":
       Pulsa el QR para ampliarlo · Comparte con tu médico al instante</div>
   </div>
 </div>""", unsafe_allow_html=True)
+
+    # Modal QR — inyectado en el documento padre via components.html
+    components.html(f"""
+<script>
+(function() {{
+  var doc = window.parent.document;
+
+  // Crear overlay si no existe
+  if (!doc.getElementById('nx-qr-overlay')) {{
+    var ov = doc.createElement('div');
+    ov.id = 'nx-qr-overlay';
+    ov.style.cssText = [
+      'display:none','position:fixed','inset:0','z-index:99999',
+      'background:rgba(0,0,0,.82)','backdrop-filter:blur(8px)',
+      'align-items:center','justify-content:center','cursor:zoom-out'
+    ].join(';');
+    ov.innerHTML = [
+      '<div style="background:#0d1e38;border:2px solid rgba(61,142,248,.5);',
+      'border-radius:22px;padding:30px;text-align:center;',
+      'animation:nxQrPop .32s cubic-bezier(.22,.68,0,1.2) both;">',
+      '<img src="data:image/png;base64,{_qr_b64}" width="280" height="280"',
+      ' style="border-radius:14px;display:block;" />',
+      '<div style="font-size:.8rem;color:#7a95b8;margin-top:16px;">',
+      'Toca en cualquier parte para cerrar</div></div>'
+    ].join('');
+    ov.onclick = function() {{ ov.style.display = 'none'; }};
+    // Animación
+    var st = doc.createElement('style');
+    st.textContent = '@keyframes nxQrPop{{0%{{opacity:0;transform:scale(.7)}}100%{{opacity:1;transform:scale(1)}}}}';
+    doc.head.appendChild(st);
+    doc.body.appendChild(ov);
+  }}
+
+  // Conectar el thumbnail al overlay
+  function hookThumb() {{
+    var thumb = doc.getElementById('nx-qr-thumb');
+    if (thumb) {{
+      thumb.onclick = function(e) {{
+        e.stopPropagation();
+        var ov = doc.getElementById('nx-qr-overlay');
+        ov.style.display = 'flex';
+      }};
+    }} else {{
+      setTimeout(hookThumb, 200);
+    }}
+  }}
+  hookThumb();
+}})();
+</script>
+""", height=0)
 
     # — Fila de stats (3 columnas) —
     st.markdown(f"""
@@ -2615,36 +2648,10 @@ elif st.session_state.pantalla == "resultado":
             '⚠️ Error al generar PDF</div>', unsafe_allow_html=True,
         )
     if sc5.button(t('btn_nueva'), use_container_width=True, key="btn_nueva_top"):
-        for _k in ("_pdf", "_email_ok", "_email_err_mail", "_pdf_err", "webhook_enviado", "feedback_dado"):
+        for _k in ("_pdf", "_email_ok", "_email_err_mail", "_pdf_err", "webhook_enviado"):
             st.session_state.pop(_k, None)
         reset_triaje()
         ir("home")
-
-    # — Feedback del usuario (I) —
-    if not st.session_state.get("feedback_dado"):
-        st.markdown("""
-        <div class="nx-fb-row">
-          <span class="nx-fb-lbl">¿Te ha resultado útil este triaje?</span>
-        </div>""", unsafe_allow_html=True)
-        _fb1, _fb2, _fb3, _fb_sp = st.columns([1, 1, 1, 3])
-        _tok_fb = st.session_state.get("token_informe")
-        if _fb1.button("😊 Muy útil", use_container_width=True, key="fb_pos"):
-            guardar_feedback("positivo", _tok_fb)
-            st.session_state["feedback_dado"] = True
-            st.rerun()
-        if _fb2.button("😐 Útil", use_container_width=True, key="fb_neu"):
-            guardar_feedback("neutral", _tok_fb)
-            st.session_state["feedback_dado"] = True
-            st.rerun()
-        if _fb3.button("😞 No útil", use_container_width=True, key="fb_neg"):
-            guardar_feedback("negativo", _tok_fb)
-            st.session_state["feedback_dado"] = True
-            st.rerun()
-    else:
-        st.markdown("""
-        <div class="nx-fb-ok">
-          🙏 ¡Gracias por tu valoración! Nos ayuda a mejorar NexaCare.
-        </div>""", unsafe_allow_html=True)
 
     # — Notificación email —
     if st.session_state.get("_email_ok"):
