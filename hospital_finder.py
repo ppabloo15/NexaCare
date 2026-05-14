@@ -173,6 +173,8 @@ out center tags;"""
             "distancia_m": dist,
             "urgencias":   tiene_urg,
             "es_hospital": es_hospital,
+            "lat":         clat,
+            "lon":         clon,
             "maps_url":    f"https://www.google.com/maps/dir/?api=1&destination={clat},{clon}",
         })
 

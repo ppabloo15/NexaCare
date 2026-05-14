@@ -4,9 +4,12 @@ Flujo: HOME → TRIAJE ACTIVO → RESULTADO
 TFG · SMR · 2025-2026
 """
 import html as _html_mod
+import io
+import base64
 import os
 import re
 import uuid
+import qrcode
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -23,6 +26,8 @@ from ai_service import (
 )
 from pdf_report import generar_pdf, generar_pdf_admin
 from hospital_finder import geocodificar, buscar_centros, formatear_distancia
+import folium
+from streamlit_folium import st_folium
 from email_service import enviar_informe
 
 # ── Configuración ─────────────────────────────────────────────────────────────
@@ -79,9 +84,18 @@ st.markdown("""
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; }
 html, body, .stApp { background: var(--bg) !important; color: var(--txt) !important; }
-#MainMenu, footer, header, .stDeployButton { visibility: hidden !important; }
+#MainMenu, footer, header, .stDeployButton,
+[data-testid="stToolbar"], [data-testid="stDecoration"],
+[data-testid="stStatusWidget"] { visibility: hidden !important; display: none !important; }
 [data-testid='stSidebar'], [data-testid='stSidebarNav'],
 [data-testid='collapsedControl'] { display: none !important; }
+
+@keyframes pulse-rojo {
+  0%   { box-shadow: 0 0 0 0 rgba(232,64,64,.7); }
+  70%  { box-shadow: 0 0 0 22px rgba(232,64,64,0); }
+  100% { box-shadow: 0 0 0 0 rgba(232,64,64,0); }
+}
+.nx-hero-rojo { animation: popIn .4s cubic-bezier(.22,.68,0,1.2) both, pulse-rojo 1.8s ease-out .5s infinite !important; }
 .block-container { padding: 12px 24px 32px 24px !important; max-width: 1180px !important; }
 
 /* ── Streamlit inputs ── */
@@ -2355,8 +2369,9 @@ elif st.session_state.pantalla == "resultado":
 
     # ══ LAYOUT ═══════════════════════════════════════════════════════════════
     # — Hero banner (full width) —
+    _hero_cls = "nx-hero-rojo" if r["color"] == "red" else ""
     st.markdown(f"""
-    <div style="
+    <div class="{_hero_cls}" style="
       background:{e['bg']};border:2px solid {e['bdr']};border-radius:18px;
       padding:20px 26px 18px;margin-bottom:14px;
       animation:popIn .4s cubic-bezier(.22,.68,0,1.2) both;
@@ -2377,7 +2392,7 @@ elif st.session_state.pantalla == "resultado":
             {t('rx_urg')} · NexaCare · {sintoma}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:2.4rem;font-weight:900;color:{e['txt']};line-height:1;">{porcentaje}%</div>
+          <div id="nx-pct-num" style="font-size:2.4rem;font-weight:900;color:{e['txt']};line-height:1;">0%</div>
           <div style="font-size:.68rem;color:{e['txt']};opacity:.55;margin-top:2px;">{t('rx_idx_grav')}</div>
         </div>
       </div>
@@ -2393,6 +2408,48 @@ elif st.session_state.pantalla == "resultado":
       <div style="display:flex;justify-content:space-between;
         font-size:.62rem;color:{e['txt']};opacity:.45;">
         <span>{t('rx_leve')}</span><span>{t('rx_mod')}</span><span>{t('rx_urg2')}</span><span>{t('rx_emerg')}</span>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+    # — Animación contador porcentaje —
+    components.html(f"""<script>
+    (function(){{
+      var el = window.parent.document.getElementById('nx-pct-num');
+      if(!el) return;
+      var target = {porcentaje}, start = 0, dur = 1400, t0 = null;
+      function step(ts){{
+        if(!t0) t0 = ts;
+        var p = Math.min((ts-t0)/dur, 1);
+        var ease = 1 - Math.pow(1-p, 3);
+        el.textContent = Math.round(ease*target) + '%';
+        if(p < 1) requestAnimationFrame(step);
+      }}
+      requestAnimationFrame(step);
+    }})();
+    </script>""", height=0)
+
+    # — QR dinámico escaneable —
+    _token = st.session_state.get("token_informe", "")
+    _qr_url = f"{NEXACARE_URL}/?token={_token}" if _token else NEXACARE_URL
+    _qr = qrcode.QRCode(box_size=4, border=2)
+    _qr.add_data(_qr_url)
+    _qr.make(fit=True)
+    _qr_img = _qr.make_image(fill_color="#e2eaf6", back_color="#071426")
+    _qr_buf = io.BytesIO()
+    _qr_img.save(_qr_buf, format="PNG")
+    _qr_b64 = base64.b64encode(_qr_buf.getvalue()).decode()
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:14px;
+      background:var(--surf);border:1px solid var(--bdr);border-radius:14px;
+      padding:12px 18px;margin-bottom:10px;">
+      <img src="data:image/png;base64,{_qr_b64}" width="72" height="72"
+        style="border-radius:8px;flex-shrink:0;" alt="QR informe"/>
+      <div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--txt3);
+          text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">
+          📱 Escanea para ver este informe en tu móvil</div>
+        <div style="font-size:.78rem;color:var(--txt2);">
+          Comparte el resultado con tu médico al instante</div>
       </div>
     </div>""", unsafe_allow_html=True)
 
@@ -2413,8 +2470,70 @@ elif st.session_state.pantalla == "resultado":
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # — Botones de acción (2 columnas) —
-    sc4, sc5 = st.columns([1, 1], gap="small")
+    # — Imagen PNG del resultado (descargable) —
+    def _generar_png_resultado() -> bytes:
+        """Genera una imagen PNG con la tarjeta del resultado para compartir."""
+        from PIL import Image, ImageDraw, ImageFont
+        _nivel_colores = {
+            "red":    ((232, 64,  64),  (30, 10, 10)),
+            "orange": ((232, 114, 40),  (30, 18, 8)),
+            "yellow": ((212, 160, 32),  (28, 24, 8)),
+            "green":  ((40,  184, 110), (8,  28, 18)),
+        }
+        _rgb, _bg_rgb = _nivel_colores.get(r["color"], ((61, 142, 248), (7, 20, 38)))
+        W, H = 800, 420
+        img = Image.new("RGB", (W, H), color=(7, 20, 38))
+        draw = ImageDraw.Draw(img)
+
+        # Franja de color lateral
+        draw.rectangle([(0, 0), (8, H)], fill=_rgb)
+
+        # Fondo suave del nivel
+        draw.rectangle([(8, 0), (W, H)], fill=(12, 28, 52))
+
+        # Título NexaCare
+        draw.text((40, 30), "NexaCare", fill=(61, 142, 248), font=None)
+
+        # Nivel de triaje
+        _nivel_txt = r.get("nivel", "RESULTADO").upper()
+        draw.rectangle([(40, 70), (W - 40, 140)], fill=_rgb + (30,) if len(_rgb) == 3 else _rgb)
+        draw.rectangle([(40, 70), (W - 40, 140)], fill=(int(_rgb[0]*0.15)+7, int(_rgb[1]*0.15)+15, int(_rgb[2]*0.15)+30))
+        draw.text((W // 2, 105), _nivel_txt, fill=_rgb, font=None, anchor="mm" if hasattr(draw, "anchor") else None)
+
+        # Porcentaje
+        draw.text((40, 160), f"Gravedad: {porcentaje}%", fill=(168, 200, 232), font=None)
+
+        # Síntoma
+        draw.text((40, 195), f"Síntoma: {sintoma}", fill=(140, 170, 210), font=None)
+
+        # Puntuación
+        draw.text((40, 230), f"Puntuación: {pts}/{total_pts}", fill=(140, 170, 210), font=None)
+
+        # Fecha
+        _fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
+        draw.text((40, 265), f"Fecha: {_fecha}", fill=(90, 120, 160), font=None)
+
+        # Recomendación (truncada)
+        _reco = r.get("recomendacion", "")[:90]
+        if len(r.get("recomendacion", "")) > 90:
+            _reco += "…"
+        draw.text((40, 310), "Recomendación:", fill=(90, 120, 160), font=None)
+        draw.text((40, 335), _reco, fill=(140, 170, 210), font=None)
+
+        # Pie
+        draw.text((40, H - 30), "nexacare-gja3pyzjnxfu6feejp437e.streamlit.app", fill=(50, 80, 120), font=None)
+
+        # Borde de color nivel
+        draw.rectangle([(0, 0), (W - 1, H - 1)], outline=_rgb, width=3)
+
+        _buf = io.BytesIO()
+        img.save(_buf, format="PNG", optimize=True)
+        return _buf.getvalue()
+
+    _png_resultado = _generar_png_resultado()
+
+    # — Botones de acción (3 columnas) —
+    sc4, sc_png, sc5 = st.columns([1, 1, 1], gap="small")
     if _pdf:
         sc4.download_button(
             t('btn_pdf'), data=_pdf,
@@ -2427,6 +2546,14 @@ elif st.session_state.pantalla == "resultado":
             'border-radius:10px;padding:10px;font-size:.75rem;color:#e84040;text-align:center;">'
             '⚠️ Error al generar PDF</div>', unsafe_allow_html=True,
         )
+    sc_png.download_button(
+        "🖼️ Guardar imagen",
+        data=_png_resultado,
+        file_name=f"NexaCare_resultado_{datetime.now().strftime('%Y%m%d_%H%M')}.png",
+        mime="image/png",
+        use_container_width=True,
+        key="png_top",
+    )
     if sc5.button(t('btn_nueva'), use_container_width=True, key="btn_nueva_top"):
         for _k in ("_pdf", "_email_ok", "_email_err_mail", "_pdf_err", "webhook_enviado"):
             st.session_state.pop(_k, None)
@@ -2518,6 +2645,7 @@ elif st.session_state.pantalla == "resultado":
                         with st.spinner(t("rx_buscar_spin")):
                             coords = geocodificar(ub)
                             if coords:
+                                st.session_state.coords_busq = coords
                                 centros = buscar_centros(coords[0], coords[1], nivel_color=r["color"])
                                 st.session_state.centros = centros
                             else:
@@ -2527,13 +2655,60 @@ elif st.session_state.pantalla == "resultado":
                 st.markdown(f'<div class="nx-aviso">{t("rx_no_loc")}</div>', unsafe_allow_html=True)
             elif isinstance(st.session_state.centros, list) and st.session_state.centros:
                 urgente = r["color"] in ("red", "orange")
+                _coords = st.session_state.get("coords_busq")
+
+                # — Mapa interactivo folium —
+                if _coords:
+                    _flat, _flon = _coords
+                    _fmap = folium.Map(
+                        location=[_flat, _flon],
+                        zoom_start=13,
+                        tiles="CartoDB dark_matter",
+                    )
+                    # Marcador de usuario
+                    folium.Marker(
+                        location=[_flat, _flon],
+                        popup="📍 Tu ubicación",
+                        tooltip="Tu ubicación",
+                        icon=folium.Icon(color="blue", icon="user", prefix="fa"),
+                    ).add_to(_fmap)
+                    # Marcadores de centros
+                    _color_map = {"red": "red", "orange": "orange", "yellow": "beige", "green": "green"}
+                    _pin_color = _color_map.get(r["color"], "green")
+                    for _c in st.session_state.centros:
+                        _clat = _c.get("lat")
+                        _clon = _c.get("lon")
+                        if _clat is None or _clon is None:
+                            continue
+                        _ic = "plus-sign" if _c.get("es_hospital") else "home"
+                        folium.Marker(
+                            location=[_clat, _clon],
+                            popup=folium.Popup(
+                                f"<b>{_html_mod.escape(_c['nombre'])}</b><br>{_html_mod.escape(_c['tipo'])}<br>"
+                                f"📍 {formatear_distancia(_c['distancia_m'])}"
+                                f"{'<br>🚨 URGENCIAS' if _c.get('urgencias') else ''}",
+                                max_width=220,
+                            ),
+                            tooltip=_c["nombre"],
+                            icon=folium.Icon(color=_pin_color, icon=_ic, prefix="glyphicon"),
+                        ).add_to(_fmap)
+                        # Línea desde usuario hasta centro
+                        folium.PolyLine(
+                            locations=[[_flat, _flon], [_clat, _clon]],
+                            color="#3d8ef8", weight=1.5, opacity=0.45, dash_array="6",
+                        ).add_to(_fmap)
+                    st_folium(_fmap, use_container_width=True, height=280, returned_objects=[])
+
+                # — Tarjetas de centros —
                 for i, c in enumerate(st.session_state.centros):
                     urg = '<div class="nx-urg-badge">🚨 URGENCIAS</div>' if c.get("urgencias") else ""
                     rec = '<div class="nx-rec-badge">⭐ RECOMENDADO</div>' if urgente and c.get("es_hospital") else ""
                     _nombre_esc = _html_mod.escape(c['nombre'])
                     _tipo_esc   = _html_mod.escape(c['tipo'])
+                    _maps_url   = c.get("maps_url", "#")
                     st.markdown(f"""
-                    <div class="nx-hosp-card" style="animation-delay:{i*0.07}s;">
+                    <a href="{_maps_url}" target="_blank" style="text-decoration:none;">
+                    <div class="nx-hosp-card" style="animation-delay:{i*0.07}s;cursor:pointer;">
                       <div class="nx-hosp-ico-wrap">{c['icono']}</div>
                       <div class="nx-hosp-info">
                         <div class="nx-hosp-name">{_nombre_esc}</div>
@@ -2543,7 +2718,7 @@ elif st.session_state.pantalla == "resultado":
                         <div class="nx-dist-badge">📍 {formatear_distancia(c['distancia_m'])}</div>
                         {urg}{rec}
                       </div>
-                    </div>""", unsafe_allow_html=True)
+                    </div></a>""", unsafe_allow_html=True)
             elif isinstance(st.session_state.centros, list) and not st.session_state.centros:
                 st.markdown(f'<div class="nx-reco" style="color:var(--txt3);">{t("rx_sin_centros")}</div>', unsafe_allow_html=True)
 

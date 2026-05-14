@@ -5,3 +5,5 @@ fpdf2>=2.7.9
 plotly>=5.0.0
 qrcode>=7.4.2
 Pillow>=10.0.0
+folium>=0.14.0
+streamlit-folium>=0.15.0
