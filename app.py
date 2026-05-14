@@ -1182,10 +1182,12 @@ st.markdown(f"""
   </form>
 </div>""", unsafe_allow_html=True)
 # El toggle real se implementa con un st.button oculto
-if st.button("tema_toggle_hidden", key="nx_tema_toggle",
-             label_visibility="collapsed"):
+if st.button("tema_toggle_hidden", key="nx_tema_toggle"):
     st.session_state.tema = "light" if st.session_state.tema == "dark" else "dark"
     st.rerun()
+st.markdown("""<style>
+[data-testid="stButton-nx_tema_toggle"] { display:none !important; }
+</style>""", unsafe_allow_html=True)
 # JS que redirige el clic al botón real de Streamlit
 components.html("""<script>
 window._nxToggleTema = function() {
