@@ -1199,10 +1199,10 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
       #nx-landing-full::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(37,90,210,.18) 0%,transparent 65%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(40,184,110,.10) 0%,transparent 60%),radial-gradient(ellipse 90% 40% at 50% 50%,rgba(61,142,248,.06) 0%,transparent 70%);}
       #nx-landing-full::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(61,142,248,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(61,142,248,.04) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
       #nx-landing-full .root{position:relative;z-index:10;display:grid;grid-template-columns:1fr 1fr;height:100%;width:100%;overflow:hidden;}
-      #nx-landing-full .left{display:flex;flex-direction:column;justify-content:center;padding:32px 40px 24px 44px;position:relative;}
+      #nx-landing-full .left{display:flex;flex-direction:column;justify-content:center;padding:32px 40px 24px 44px;position:relative;min-width:0;overflow:hidden;}
       #nx-landing-full .badge{display:inline-flex;align-items:center;gap:8px;width:fit-content;background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.28);color:#5ba8ff;padding:6px 16px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:22px;animation:nxUp .5s cubic-bezier(.22,.68,0,1.2) both .05s;}
       #nx-landing-full .bdot{width:7px;height:7px;border-radius:50%;background:#3d8ef8;box-shadow:0 0 8px #3d8ef8;animation:nxGlow 2s ease-in-out infinite;}
-      #nx-landing-full .logo{font-size:clamp(3.2rem,5.5vw,5.2rem);font-weight:900;letter-spacing:-3px;line-height:.9;margin-bottom:16px;animation:nxUp .7s cubic-bezier(.22,.68,0,1.2) both .12s;}
+      #nx-landing-full .logo{font-size:clamp(2.4rem,4vw,3.8rem);font-weight:900;letter-spacing:-2px;line-height:.95;margin-bottom:16px;animation:nxUp .7s cubic-bezier(.22,.68,0,1.2) both .12s;white-space:nowrap;}
       #nx-landing-full .logo-nexa{color:#e2eaf6;}
       #nx-landing-full .logo-care{background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nxShine 3.5s linear infinite;}
       #nx-landing-full .logo-cross{display:inline-block;width:.18em;height:.9em;background:#3d8ef8;border-radius:2px;margin-right:4px;vertical-align:middle;box-shadow:0 0 18px rgba(61,142,248,.8);animation:nxCrossPop .5s cubic-bezier(.22,.68,0,1.2) both .05s;position:relative;}
@@ -1218,7 +1218,7 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
       #nx-landing-full .nx-cta-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 14px 40px rgba(61,142,248,.6);}
       #nx-landing-full .nx-cta-btn:active{transform:translateY(0) scale(.98);}
       #nx-landing-full .foot{font-size:.73rem;color:#2e4a66;margin-top:12px;animation:nxUp .4s ease both .7s;}
-      #nx-landing-full .right{display:flex;flex-direction:column;justify-content:center;padding:28px 44px 24px 32px;gap:14px;position:relative;}
+      #nx-landing-full .right{display:flex;flex-direction:column;justify-content:center;padding:28px 44px 24px 32px;gap:14px;position:relative;min-width:0;overflow:hidden;}
       #nx-landing-full .right::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;background:linear-gradient(to bottom,transparent,rgba(61,142,248,.25),transparent);}
       #nx-landing-full .monitor{background:rgba(6,15,30,.9);border:1px solid rgba(61,142,248,.2);border-radius:16px;padding:16px 20px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .4s;position:relative;overflow:hidden;}
       #nx-landing-full .monitor::before{content:'● REC';position:absolute;top:12px;right:14px;font-size:.65rem;font-weight:700;color:#e84040;letter-spacing:.08em;animation:nxRecBlink 1.4s ease-in-out infinite;}
