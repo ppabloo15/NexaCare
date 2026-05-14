@@ -1152,190 +1152,232 @@ if st.session_state.pantalla != "landing":
 # PANTALLA: LANDING
 # ══════════════════════════════════════════════════════════════════════════════
 if st.session_state.pantalla == "landing":
-    # CSS extra: quitar padding superior del block-container en landing
+    # CSS: contenedor full-width sin padding para landing
     st.markdown("""
 <style>
-/* Landing: eliminar padding de Streamlit para que el componente ocupe toda la pantalla */
-section[data-testid="stMain"] > div:first-child { padding-top: 0 !important; }
-.block-container { padding-top: 0 !important; }
-/* Ocultar scrollbar del iframe en landing */
+.block-container { padding: 0 !important; max-width: 100% !important; }
+section[data-testid="stMain"] > div { padding-top: 0 !important; }
+[data-testid="stVerticalBlock"] { gap: 0 !important; }
 iframe { border: none !important; display: block !important; }
 /* Botón CTA landing */
-div[data-testid="stButton"] button[kind="primary"],
-div[data-testid="stButton"] button[kind="primaryFormSubmit"] {
+#nx-landing-cta button {
   background: linear-gradient(135deg,#2d6fd4 0%,#3d8ef8 50%,#5ba8ff 100%) !important;
   color: #fff !important; border: none !important; border-radius: 18px !important;
-  min-height: 58px !important; font-size: 1.08rem !important; font-weight: 800 !important;
+  min-height: 58px !important; font-size: 1.1rem !important; font-weight: 800 !important;
   letter-spacing: .02em !important;
-  box-shadow: 0 12px 32px rgba(61,142,248,.45), 0 0 0 0 rgba(61,142,248,.3) !important;
+  box-shadow: 0 12px 32px rgba(61,142,248,.45) !important;
   transition: transform .2s, box-shadow .2s !important;
+  width: 100% !important;
 }
-div[data-testid="stButton"] button[kind="primary"]:hover,
-div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
+#nx-landing-cta button:hover {
   transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 18px 44px rgba(61,142,248,.55), 0 0 60px rgba(61,142,248,.18) !important;
+  box-shadow: 0 18px 44px rgba(61,142,248,.6) !important;
 }
 </style>""", unsafe_allow_html=True)
 
-    # Landing fullscreen — inyectado como overlay position:fixed en el documento padre
-    components.html("""<script>
+    _LANDING_HTML = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'DM Sans',-apple-system,sans-serif;background:#060f1e;color:#e2eaf6;
+  height:100%;width:100%;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(37,90,210,.18) 0%,transparent 65%),
+    radial-gradient(ellipse 60% 50% at 80% 80%,rgba(40,184,110,.10) 0%,transparent 60%);z-index:0;}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(61,142,248,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(61,142,248,.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
+.root{position:relative;z-index:10;display:grid;grid-template-columns:1fr 1fr;
+  height:100vh;width:100%;overflow:hidden;}
+.left{display:flex;flex-direction:column;justify-content:center;
+  padding:28px 36px 20px 48px;min-width:0;overflow:hidden;}
+.right{display:flex;flex-direction:column;justify-content:center;
+  padding:24px 48px 20px 32px;gap:12px;min-width:0;overflow:hidden;position:relative;}
+.right::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(61,142,248,.25),transparent);}
+.badge{display:inline-flex;align-items:center;gap:8px;width:fit-content;
+  background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.28);
+  color:#5ba8ff;padding:5px 14px;border-radius:999px;
+  font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:18px;animation:up .5s cubic-bezier(.22,.68,0,1.2) both .05s;}
+.bdot{width:6px;height:6px;border-radius:50%;background:#3d8ef8;
+  box-shadow:0 0 8px #3d8ef8;animation:glow 2s ease-in-out infinite;}
+.logo{font-size:clamp(2.2rem,3.6vw,3.4rem);font-weight:900;letter-spacing:-2px;
+  line-height:.95;margin-bottom:14px;white-space:nowrap;
+  animation:up .7s cubic-bezier(.22,.68,0,1.2) both .12s;}
+.logo-nexa{color:#e2eaf6;}
+.logo-care{background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);
+  background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 3.5s linear infinite;}
+.logo-cross{display:inline-block;width:.16em;height:.85em;background:#3d8ef8;
+  border-radius:2px;margin-right:3px;vertical-align:middle;
+  box-shadow:0 0 16px rgba(61,142,248,.8);position:relative;}
+.logo-cross::after{content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:.85em;height:.16em;background:#3d8ef8;border-radius:2px;}
+.sub{font-size:1rem;font-weight:600;color:#a8c8e8;line-height:1.5;max-width:420px;
+  margin-bottom:8px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
+.desc{font-size:.84rem;color:#4a6888;line-height:1.65;max-width:420px;
+  margin-bottom:20px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
+.steps{display:flex;flex-direction:column;gap:9px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .34s;}
+.step{display:flex;align-items:center;gap:12px;}
+.step-n{width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  background:rgba(61,142,248,.12);border:1px solid rgba(61,142,248,.3);
+  color:#3d8ef8;font-size:.75rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center;}
+.step-t{font-size:.85rem;color:#7a9ab8;}
+.step-t strong{color:#c8dff2;font-weight:700;}
+.foot{font-size:.7rem;color:#2e4a66;margin-top:16px;
+  animation:up .4s ease both .7s;}
+/* DERECHA */
+.monitor{background:rgba(6,15,30,.9);border:1px solid rgba(61,142,248,.2);
+  border-radius:14px;padding:14px 18px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .4s;position:relative;overflow:hidden;}
+.monitor::before{content:'● REC';position:absolute;top:10px;right:12px;
+  font-size:.62rem;font-weight:700;color:#e84040;letter-spacing:.08em;
+  animation:recBlink 1.4s ease-in-out infinite;}
+.mon-title{font-size:.62rem;font-weight:700;color:#3d5470;
+  text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;}
+canvas#ekg{display:block;width:100%;height:48px;}
+.niveles{display:flex;flex-direction:column;gap:7px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .5s;}
+.nivel-row{background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.1);
+  border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.nivel-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;animation:glow 2s ease-in-out infinite;}
+.nivel-info{flex:1;}
+.nivel-name{font-size:.82rem;font-weight:700;margin-bottom:3px;}
+.nivel-bar-track{height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
+.nivel-bar-fill{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.22,.68,0,1.2);}
+.nivel-pct{font-size:.75rem;font-weight:800;flex-shrink:0;min-width:32px;text-align:right;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .62s;}
+.stat{background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.12);
+  border-radius:10px;padding:10px 12px;text-align:center;}
+.stat-v{font-size:1.4rem;font-weight:900;color:#e2eaf6;line-height:1;}
+.stat-l{font-size:.58rem;font-weight:700;color:#3d5470;text-transform:uppercase;
+  letter-spacing:.1em;margin-top:3px;}
+.aviso{display:flex;align-items:center;gap:8px;
+  background:rgba(212,160,32,.05);border:1px solid rgba(212,160,32,.18);
+  color:#9a7828;padding:7px 12px;border-radius:9px;
+  font-size:.72rem;line-height:1.4;animation:up .4s ease both .72s;}
+@keyframes up{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+@keyframes shine{0%{background-position:0% center;}100%{background-position:200% center;}}
+@keyframes glow{0%,100%{box-shadow:0 0 5px currentColor;}50%{box-shadow:0 0 14px currentColor,0 0 28px currentColor;}}
+@keyframes recBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
+</style>
+</head>
+<body>
+<div class="root">
+  <div class="left">
+    <div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA · TFG SMR 2025–2026</div>
+    <div class="logo">
+      <span class="logo-nexa"><span class="logo-cross"></span>Nexa</span><span class="logo-care">Care</span>
+    </div>
+    <p class="sub">Tu asistente de triaje médico personal, impulsado por Inteligencia Artificial</p>
+    <p class="desc">Evalúa tus síntomas en menos de 2 minutos. Obtén tu nivel de urgencia, análisis clínico con IA y un informe PDF — sin registro, gratis.</p>
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><div class="step-t"><strong>Selecciona</strong> tu síntoma principal</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t"><strong>Responde</strong> 7 preguntas rápidas</div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-t"><strong>Recibe</strong> tu nivel de urgencia + informe IA</div></div>
+    </div>
+    <div class="foot">NexaCare · TFG SMR 2025–2026 · Pablo Esteban · Herramienta orientativa, no diagnóstico médico</div>
+  </div>
+  <div class="right">
+    <div class="monitor">
+      <div class="mon-title">Monitor de signos · NexaCare Live</div>
+      <canvas id="ekg" height="48"></canvas>
+    </div>
+    <div class="niveles">
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#28b86e;color:#28b86e;"></div>
+        <div class="nivel-info"><div class="nivel-name" style="color:#28b86e;">VERDE — Leve</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b1" style="background:#28b86e;"></div></div></div>
+        <div class="nivel-pct" style="color:#28b86e;">15%</div>
+      </div>
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#d4a020;color:#d4a020;"></div>
+        <div class="nivel-info"><div class="nivel-name" style="color:#d4a020;">AMARILLO — Moderado</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b2" style="background:#d4a020;"></div></div></div>
+        <div class="nivel-pct" style="color:#d4a020;">45%</div>
+      </div>
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#e87228;color:#e87228;"></div>
+        <div class="nivel-info"><div class="nivel-name" style="color:#e87228;">NARANJA — Urgente</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b3" style="background:#e87228;"></div></div></div>
+        <div class="nivel-pct" style="color:#e87228;">70%</div>
+      </div>
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#e84040;color:#e84040;animation:glow 1s ease-in-out infinite;"></div>
+        <div class="nivel-info"><div class="nivel-name" style="color:#e84040;">ROJO — Emergencia</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b4" style="background:#e84040;"></div></div></div>
+        <div class="nivel-pct" style="color:#e84040;">95%</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-v">⚡</div><div class="stat-l">&lt; 2 min resultado</div></div>
+      <div class="stat"><div class="stat-v">🤖</div><div class="stat-l">IA Groq + Claude</div></div>
+      <div class="stat"><div class="stat-v">📄</div><div class="stat-l">Informe PDF</div></div>
+    </div>
+    <div class="aviso">⚠️ Herramienta orientativa — No sustituye la valoración médica profesional</div>
+  </div>
+</div>
+<script>
+setTimeout(function(){
+  document.getElementById('b1').style.width='15%';
+  document.getElementById('b2').style.width='45%';
+  document.getElementById('b3').style.width='70%';
+  document.getElementById('b4').style.width='95%';
+},600);
 (function(){
-  var doc = window.parent.document;
-  if (doc.getElementById('nx-landing-full')) return;
-
-  if (!doc.getElementById('nx-landing-css')) {
-    var sty = doc.createElement('style');
-    sty.id = 'nx-landing-css';
-    sty.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800;900&display=swap');
-      #nx-landing-full *,#nx-landing-full *::before,#nx-landing-full *::after{box-sizing:border-box;margin:0;padding:0;}
-      #nx-landing-full{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;position:fixed;inset:0;z-index:9999;background:#060f1e;color:#e2eaf6;overflow:hidden;}
-      #nx-landing-full::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(37,90,210,.18) 0%,transparent 65%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(40,184,110,.10) 0%,transparent 60%),radial-gradient(ellipse 90% 40% at 50% 50%,rgba(61,142,248,.06) 0%,transparent 70%);}
-      #nx-landing-full::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(61,142,248,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(61,142,248,.04) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
-      #nx-landing-full .root{position:relative;z-index:10;display:grid;grid-template-columns:1fr 1fr;height:100%;width:100%;overflow:hidden;}
-      #nx-landing-full .left{display:flex;flex-direction:column;justify-content:center;padding:32px 40px 24px 44px;position:relative;min-width:0;overflow:hidden;}
-      #nx-landing-full .badge{display:inline-flex;align-items:center;gap:8px;width:fit-content;background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.28);color:#5ba8ff;padding:6px 16px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:22px;animation:nxUp .5s cubic-bezier(.22,.68,0,1.2) both .05s;}
-      #nx-landing-full .bdot{width:7px;height:7px;border-radius:50%;background:#3d8ef8;box-shadow:0 0 8px #3d8ef8;animation:nxGlow 2s ease-in-out infinite;}
-      #nx-landing-full .logo{font-size:clamp(2.4rem,4vw,3.8rem);font-weight:900;letter-spacing:-2px;line-height:.95;margin-bottom:16px;animation:nxUp .7s cubic-bezier(.22,.68,0,1.2) both .12s;white-space:nowrap;}
-      #nx-landing-full .logo-nexa{color:#e2eaf6;}
-      #nx-landing-full .logo-care{background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nxShine 3.5s linear infinite;}
-      #nx-landing-full .logo-cross{display:inline-block;width:.18em;height:.9em;background:#3d8ef8;border-radius:2px;margin-right:4px;vertical-align:middle;box-shadow:0 0 18px rgba(61,142,248,.8);animation:nxCrossPop .5s cubic-bezier(.22,.68,0,1.2) both .05s;position:relative;}
-      #nx-landing-full .logo-cross::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:.9em;height:.18em;background:#3d8ef8;border-radius:2px;}
-      #nx-landing-full .sub{font-size:1.1rem;font-weight:600;color:#a8c8e8;line-height:1.5;max-width:440px;margin-bottom:10px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
-      #nx-landing-full .desc{font-size:.88rem;color:#4a6888;line-height:1.7;max-width:440px;margin-bottom:24px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
-      #nx-landing-full .steps{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .34s;}
-      #nx-landing-full .step{display:flex;align-items:center;gap:14px;}
-      #nx-landing-full .step-n{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:rgba(61,142,248,.12);border:1px solid rgba(61,142,248,.3);color:#3d8ef8;font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
-      #nx-landing-full .step-t{font-size:.88rem;color:#7a9ab8;}
-      #nx-landing-full .step-t strong{color:#c8dff2;font-weight:700;}
-      #nx-landing-full .nx-cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:360px;padding:15px 28px;background:linear-gradient(135deg,#3d8ef8,#1a6fd4);color:#fff;font-size:1.05rem;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 28px rgba(61,142,248,.4);transition:transform .15s,box-shadow .15s;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .42s;letter-spacing:.01em;font-family:inherit;}
-      #nx-landing-full .nx-cta-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 14px 40px rgba(61,142,248,.6);}
-      #nx-landing-full .nx-cta-btn:active{transform:translateY(0) scale(.98);}
-      #nx-landing-full .foot{font-size:.73rem;color:#2e4a66;margin-top:12px;animation:nxUp .4s ease both .7s;}
-      #nx-landing-full .right{display:flex;flex-direction:column;justify-content:center;padding:28px 44px 24px 32px;gap:14px;position:relative;min-width:0;overflow:hidden;}
-      #nx-landing-full .right::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;background:linear-gradient(to bottom,transparent,rgba(61,142,248,.25),transparent);}
-      #nx-landing-full .monitor{background:rgba(6,15,30,.9);border:1px solid rgba(61,142,248,.2);border-radius:16px;padding:16px 20px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .4s;position:relative;overflow:hidden;}
-      #nx-landing-full .monitor::before{content:'● REC';position:absolute;top:12px;right:14px;font-size:.65rem;font-weight:700;color:#e84040;letter-spacing:.08em;animation:nxRecBlink 1.4s ease-in-out infinite;}
-      #nx-landing-full .mon-title{font-size:.65rem;font-weight:700;color:#3d5470;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;}
-      #nx-landing-full .ekg-wrap{height:52px;overflow:hidden;position:relative;}
-      #nx-landing-full canvas#ekg{display:block;}
-      #nx-landing-full .niveles{display:flex;flex-direction:column;gap:8px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .5s;}
-      #nx-landing-full .nivel-row{background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.1);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:14px;transition:border-color .2s,background .2s;}
-      #nx-landing-full .nivel-row:hover{border-color:rgba(61,142,248,.3);background:rgba(10,22,45,.9);}
-      #nx-landing-full .nivel-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;animation:nxGlow 2s ease-in-out infinite;}
-      #nx-landing-full .nivel-info{flex:1;}
-      #nx-landing-full .nivel-name{font-size:.88rem;font-weight:700;margin-bottom:4px;}
-      #nx-landing-full .nivel-bar-track{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
-      #nx-landing-full .nivel-bar-fill{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.22,.68,0,1.2);}
-      #nx-landing-full .nivel-pct{font-size:.78rem;font-weight:800;flex-shrink:0;min-width:36px;text-align:right;}
-      #nx-landing-full .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .62s;}
-      #nx-landing-full .stat{background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.12);border-radius:12px;padding:12px 14px;text-align:center;}
-      #nx-landing-full .stat-v{font-size:1.5rem;font-weight:900;color:#e2eaf6;letter-spacing:-1px;line-height:1;}
-      #nx-landing-full .stat-l{font-size:.62rem;font-weight:700;color:#3d5470;text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
-      #nx-landing-full .aviso{display:flex;align-items:center;gap:8px;background:rgba(212,160,32,.05);border:1px solid rgba(212,160,32,.18);color:#9a7828;padding:8px 14px;border-radius:10px;font-size:.75rem;line-height:1.45;animation:nxUp .4s ease both .72s;}
-      @keyframes nxUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-      @keyframes nxShine{0%{background-position:0% center;}100%{background-position:200% center;}}
-      @keyframes nxGlow{0%,100%{box-shadow:0 0 5px currentColor;}50%{box-shadow:0 0 14px currentColor,0 0 28px currentColor;}}
-      @keyframes nxRecBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
-      @keyframes nxCrossPop{0%{transform:scaleY(0);}100%{transform:scaleY(1);}}
-    `;
-    doc.head.appendChild(sty);
-  }
-
-  var ov = doc.createElement('div');
-  ov.id = 'nx-landing-full';
-  ov.innerHTML = '<div class="root">'
-    + '<div class="left">'
-    + '<div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA · TFG SMR 2025–2026</div>'
-    + '<div class="logo"><span class="logo-nexa"><span class="logo-cross"></span>Nexa</span><span class="logo-care">Care</span></div>'
-    + '<p class="sub">Tu asistente de triaje médico personal, impulsado por Inteligencia Artificial</p>'
-    + '<p class="desc">Evalúa tus síntomas en menos de 2 minutos. Obtén tu nivel de urgencia, análisis clínico con IA y un informe PDF listo para mostrar a tu médico — sin registro, gratis.</p>'
-    + '<div class="steps">'
-    + '<div class="step"><div class="step-n">1</div><div class="step-t"><strong>Selecciona</strong> tu síntoma principal</div></div>'
-    + '<div class="step"><div class="step-n">2</div><div class="step-t"><strong>Responde</strong> 7 preguntas rápidas</div></div>'
-    + '<div class="step"><div class="step-n">3</div><div class="step-t"><strong>Recibe</strong> tu nivel de urgencia + informe IA</div></div>'
-    + '</div>'
-    + '<button id="nx-go" class="nx-cta-btn">🩺 Iniciar triaje ahora</button>'
-    + '<div class="foot">NexaCare · TFG SMR 2025–2026 · Pablo Esteban · Herramienta orientativa, no diagnóstico médico</div>'
-    + '</div>'
-    + '<div class="right">'
-    + '<div class="monitor"><div class="mon-title">Monitor de signos · NexaCare Live</div><div class="ekg-wrap"><canvas id="ekg" height="52"></canvas></div></div>'
-    + '<div class="niveles">'
-    + '<div class="nivel-row"><div class="nivel-dot" style="background:#28b86e;color:#28b86e;"></div><div class="nivel-info"><div class="nivel-name" style="color:#28b86e;">VERDE — Leve</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b1" style="background:#28b86e;"></div></div></div><div class="nivel-pct" style="color:#28b86e;">15%</div></div>'
-    + '<div class="nivel-row"><div class="nivel-dot" style="background:#d4a020;color:#d4a020;"></div><div class="nivel-info"><div class="nivel-name" style="color:#d4a020;">AMARILLO — Moderado</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b2" style="background:#d4a020;"></div></div></div><div class="nivel-pct" style="color:#d4a020;">45%</div></div>'
-    + '<div class="nivel-row"><div class="nivel-dot" style="background:#e87228;color:#e87228;"></div><div class="nivel-info"><div class="nivel-name" style="color:#e87228;">NARANJA — Urgente</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b3" style="background:#e87228;"></div></div></div><div class="nivel-pct" style="color:#e87228;">70%</div></div>'
-    + '<div class="nivel-row"><div class="nivel-dot" style="background:#e84040;color:#e84040;animation:nxGlow 1s ease-in-out infinite;"></div><div class="nivel-info"><div class="nivel-name" style="color:#e84040;">ROJO — Emergencia</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b4" style="background:#e84040;"></div></div></div><div class="nivel-pct" style="color:#e84040;">95%</div></div>'
-    + '</div>'
-    + '<div class="stats">'
-    + '<div class="stat"><div class="stat-v">⚡</div><div class="stat-l">&lt; 2 min resultado</div></div>'
-    + '<div class="stat"><div class="stat-v">🤖</div><div class="stat-l">IA Groq + Claude</div></div>'
-    + '<div class="stat"><div class="stat-v">📄</div><div class="stat-l">Informe PDF</div></div>'
-    + '</div>'
-    + '<div class="aviso">⚠️ Herramienta orientativa — No sustituye la valoración médica profesional</div>'
-    + '</div></div>';
-  doc.body.appendChild(ov);
-
-  ov.querySelector('#nx-go').onclick = function() {
-    ov.style.transition = 'opacity .3s';
-    ov.style.opacity = '0';
-    setTimeout(function() {
-      // Navegar a ?go=home — Python lo detecta y cambia la pantalla
-      var loc = window.parent.location;
-      window.parent.location.href = loc.pathname + '?go=home';
-    }, 300);
-  };
-
-  setTimeout(function() {
-    ov.querySelector('#b1').style.width = '15%';
-    ov.querySelector('#b2').style.width = '45%';
-    ov.querySelector('#b3').style.width = '70%';
-    ov.querySelector('#b4').style.width = '95%';
-  }, 600);
-
-  (function() {
-    var cv = ov.querySelector('#ekg');
-    if (!cv) return;
-    var wrap = cv.parentElement;
-    cv.width = (wrap && wrap.offsetWidth) || 480;
-    cv.height = 52;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
-    var pts = [], speed = 2.2, t = 0;
-    function ekgY(v) {
-      var c = v % 120;
-      if(c < 20) return H/2 + Math.sin(c/20*Math.PI)*4;
-      if(c < 30) return H/2 - 22;
-      if(c < 36) return H/2 + 14;
-      if(c < 42) return H/2 - 18;
-      if(c < 50) return H/2 + 6;
-      if(c < 65) return H/2 + Math.sin((c-65)/15*Math.PI)*5;
-      return H/2 + Math.sin(c/20*Math.PI)*2;
-    }
-    function draw() {
-      ctx.clearRect(0,0,W,H);
-      ctx.strokeStyle='rgba(61,142,248,.08)';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
-      pts.push({y:ekgY(t)});
-      if(pts.length > Math.floor(W/speed)+2) pts.shift();
-      t += speed;
-      ctx.lineWidth=2;
-      var g=ctx.createLinearGradient(0,0,W,0);
-      g.addColorStop(0,'rgba(61,142,248,0)');
-      g.addColorStop(0.6,'rgba(61,142,248,.8)');
-      g.addColorStop(0.85,'rgba(40,184,110,.9)');
-      g.addColorStop(1,'rgba(61,142,248,.2)');
-      ctx.strokeStyle=g;ctx.shadowColor='#3d8ef8';ctx.shadowBlur=7;
-      ctx.beginPath();
-      for(var i=0;i<pts.length;i++){if(i===0)ctx.moveTo(i*speed,pts[i].y);else ctx.lineTo(i*speed,pts[i].y);}
-      ctx.stroke();
-      var last=pts[pts.length-1];
-      if(last){ctx.beginPath();ctx.arc(pts.length*speed,last.y,3,0,Math.PI*2);ctx.fillStyle='#7fc3ff';ctx.shadowBlur=12;ctx.shadowColor='#3d8ef8';ctx.fill();}
-      requestAnimationFrame(draw);
-    }
-    draw();
-  })();
+  var cv=document.getElementById('ekg');if(!cv)return;
+  cv.width=cv.parentElement.offsetWidth||480;cv.height=48;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height,pts=[],speed=2.2,t=0;
+  function ekgY(v){var c=v%120;
+    if(c<20)return H/2+Math.sin(c/20*Math.PI)*4;
+    if(c<30)return H/2-20;if(c<36)return H/2+13;
+    if(c<42)return H/2-16;if(c<50)return H/2+5;
+    if(c<65)return H/2+Math.sin((c-65)/15*Math.PI)*5;
+    return H/2+Math.sin(c/20*Math.PI)*2;}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(61,142,248,.08)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+    pts.push({y:ekgY(t)});if(pts.length>Math.floor(W/speed)+2)pts.shift();t+=speed;
+    ctx.lineWidth=2;
+    var g=ctx.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'rgba(61,142,248,0)');g.addColorStop(0.6,'rgba(61,142,248,.8)');
+    g.addColorStop(0.85,'rgba(40,184,110,.9)');g.addColorStop(1,'rgba(61,142,248,.2)');
+    ctx.strokeStyle=g;ctx.shadowColor='#3d8ef8';ctx.shadowBlur=7;
+    ctx.beginPath();
+    for(var i=0;i<pts.length;i++){if(i===0)ctx.moveTo(i*speed,pts[i].y);else ctx.lineTo(i*speed,pts[i].y);}
+    ctx.stroke();
+    var l=pts[pts.length-1];
+    if(l){ctx.beginPath();ctx.arc(pts.length*speed,l.y,3,0,Math.PI*2);
+      ctx.fillStyle='#7fc3ff';ctx.shadowBlur=12;ctx.shadowColor='#3d8ef8';ctx.fill();}
+    requestAnimationFrame(draw);}
+  draw();
 })();
-</script>""", height=0)
+</script>
+</body>
+</html>"""
+
+    components.html(_LANDING_HTML, height=620, scrolling=False)
+
+    # Botón CTA — botón Streamlit REAL, un solo click, siempre funciona
+    st.markdown('<div id="nx-landing-cta" style="padding:10px 48px 24px 48px;background:#060f1e;">', unsafe_allow_html=True)
+    if st.button("🩺 Iniciar triaje ahora", use_container_width=True,
+                 type="primary", key="btn_landing_start"):
+        st.session_state["_from_landing"] = True
+        ir("home")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+    # ── bloque landing terminado ──
 
 
 # ══════════════════════════════════════════════════════════════════════════════
