@@ -9,7 +9,6 @@ import base64
 import os
 import re
 import uuid
-import qrcode
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -1177,369 +1176,173 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
 }
 </style>""", unsafe_allow_html=True)
 
-    _LANDING_HTML = """<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800;900&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{
-  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:#060f1e;color:#e2eaf6;overflow:hidden;height:100%;width:100%;
-}
+    # Botón real de Streamlit (off-screen, se activa desde el overlay JS)
+    st.markdown('<div id="nx-real-cta" style="position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;">', unsafe_allow_html=True)
+    if st.button("Iniciar triaje", key="btn_landing_start", type="primary"):
+        st.session_state["_from_landing"] = True
+        ir("home")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-/* ── FONDO ── */
-body::before{
-  content:'';position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(37,90,210,.18) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(40,184,110,.10) 0%, transparent 60%),
-    radial-gradient(ellipse 90% 40% at 50% 50%, rgba(61,142,248,.06) 0%, transparent 70%);
-  pointer-events:none;z-index:0;
-}
-/* Grid retícula tech */
-body::after{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(61,142,248,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61,142,248,.04) 1px, transparent 1px);
-  background-size:48px 48px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-}
-
-/* ── LAYOUT ── */
-.root{position:relative;z-index:10;display:grid;
-  grid-template-columns:1fr 1fr;gap:0;height:100vh;width:100%;overflow:hidden;}
-
-/* ── LADO IZQUIERDO ── */
-.left{display:flex;flex-direction:column;justify-content:center;
-  padding:32px 40px 24px 44px;position:relative;}
-
-.badge{
-  display:inline-flex;align-items:center;gap:8px;width:fit-content;
-  background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.28);
-  color:#5ba8ff;padding:6px 16px;border-radius:999px;
-  font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  margin-bottom:22px;
-  animation:up .5s cubic-bezier(.22,.68,0,1.2) both .05s;
-}
-.bdot{width:7px;height:7px;border-radius:50%;background:#3d8ef8;
-  box-shadow:0 0 8px #3d8ef8;animation:glow 2s ease-in-out infinite;}
-
-.logo{
-  font-size:clamp(3.2rem,5.5vw,5.2rem);font-weight:900;
-  letter-spacing:-3px;line-height:.9;margin-bottom:16px;
-  animation:up .7s cubic-bezier(.22,.68,0,1.2) both .12s;
-}
-.logo-nexa{color:#e2eaf6;}
-.logo-care{
-  background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);
-  background-size:200%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:shine 3.5s linear infinite;
-}
-.logo-cross{
-  display:inline-block;width:.18em;height:.9em;background:#3d8ef8;
-  border-radius:2px;margin-right:4px;vertical-align:middle;
-  box-shadow:0 0 18px rgba(61,142,248,.8);
-  animation:crossPop .5s cubic-bezier(.22,.68,0,1.2) both .05s;
-  position:relative;
-}
-.logo-cross::after{
-  content:'';position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:.9em;height:.18em;background:#3d8ef8;border-radius:2px;
-}
-
-.sub{font-size:1.1rem;font-weight:600;color:#a8c8e8;line-height:1.5;
-  max-width:440px;margin-bottom:10px;
-  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
-.desc{font-size:.88rem;color:#4a6888;line-height:1.7;max-width:440px;
-  margin-bottom:24px;
-  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
-
-/* Steps */
-.steps{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;
-  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .34s;}
-.step{display:flex;align-items:center;gap:14px;}
-.step-n{
-  width:28px;height:28px;border-radius:50%;flex-shrink:0;
-  background:rgba(61,142,248,.12);border:1px solid rgba(61,142,248,.3);
-  color:#3d8ef8;font-size:.78rem;font-weight:800;
-  display:flex;align-items:center;justify-content:center;
-}
-.step-t{font-size:.88rem;color:#7a9ab8;}
-.step-t strong{color:#c8dff2;font-weight:700;}
-
-.foot{font-size:.73rem;color:#2e4a66;margin-top:8px;
-  animation:up .4s ease both .7s;}
-
-/* ── LADO DERECHO ── */
-.right{
-  display:flex;flex-direction:column;justify-content:center;
-  padding:28px 44px 24px 32px;gap:14px;position:relative;
-}
-/* Línea separadora vertical */
-.right::before{
-  content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;
-  background:linear-gradient(to bottom,transparent,rgba(61,142,248,.25),transparent);
-}
-
-/* EKG / Monitor */
-.monitor{
-  background:rgba(6,15,30,.9);border:1px solid rgba(61,142,248,.2);
-  border-radius:16px;padding:16px 20px;
-  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .4s;
-  position:relative;overflow:hidden;
-}
-.monitor::before{
-  content:'● REC';position:absolute;top:12px;right:14px;
-  font-size:.65rem;font-weight:700;color:#e84040;letter-spacing:.08em;
-  animation:recBlink 1.4s ease-in-out infinite;
-}
-.mon-title{font-size:.65rem;font-weight:700;color:#3d5470;
-  text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;}
-.ekg-wrap{height:52px;overflow:hidden;position:relative;}
-canvas#ekg{display:block;}
-
-/* Niveles de triaje */
-.niveles{display:flex;flex-direction:column;gap:8px;
-  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .5s;}
-.nivel-row{
-  background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.1);
-  border-radius:12px;padding:12px 16px;
-  display:flex;align-items:center;gap:14px;
-  transition:border-color .2s,background .2s;
-}
-.nivel-row:hover{border-color:rgba(61,142,248,.3);background:rgba(10,22,45,.9);}
-.nivel-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;animation:glow 2s ease-in-out infinite;}
-.nivel-info{flex:1;}
-.nivel-name{font-size:.88rem;font-weight:700;margin-bottom:4px;}
-.nivel-bar-track{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
-.nivel-bar-fill{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.22,.68,0,1.2);}
-.nivel-pct{font-size:.78rem;font-weight:800;flex-shrink:0;min-width:36px;text-align:right;}
-
-/* Stats row */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .62s;}
-.stat{
-  background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.12);
-  border-radius:12px;padding:12px 14px;text-align:center;
-}
-.stat-v{font-size:1.5rem;font-weight:900;color:#e2eaf6;letter-spacing:-1px;line-height:1;}
-.stat-l{font-size:.62rem;font-weight:700;color:#3d5470;text-transform:uppercase;
-  letter-spacing:.1em;margin-top:4px;}
-
-/* Aviso */
-.aviso{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(212,160,32,.05);border:1px solid rgba(212,160,32,.18);
-  color:#9a7828;padding:8px 14px;border-radius:10px;
-  font-size:.75rem;line-height:1.45;
-  animation:up .4s ease both .72s;
-}
-
-/* Animaciones */
-@keyframes up{
-  from{opacity:0;transform:translateY(20px);}
-  to  {opacity:1;transform:translateY(0);}
-}
-@keyframes shine{
-  0%{background-position:0% center;}
-  100%{background-position:200% center;}
-}
-@keyframes glow{
-  0%,100%{box-shadow:0 0 5px currentColor;}
-  50%{box-shadow:0 0 14px currentColor,0 0 28px currentColor;}
-}
-@keyframes recBlink{
-  0%,100%{opacity:1;}50%{opacity:.25;}
-}
-@keyframes crossPop{
-  0%{transform:scaleY(0);}
-  100%{transform:scaleY(1);}
-}
-</style>
-</head>
-<body>
-
-<div class="root">
-  <!-- ══ IZQUIERDA ══ -->
-  <div class="left">
-    <div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA · TFG SMR 2025–2026</div>
-
-    <div class="logo">
-      <span class="logo-nexa"><span class="logo-cross"></span>Nexa</span><span class="logo-care">Care</span>
-    </div>
-
-    <p class="sub">Tu asistente de triaje médico personal, impulsado por Inteligencia Artificial</p>
-    <p class="desc">Evalúa tus síntomas en menos de 2 minutos. Obtén tu nivel de urgencia, análisis clínico con IA y un informe PDF listo para mostrar a tu médico — sin registro, gratis.</p>
-
-    <div class="steps">
-      <div class="step"><div class="step-n">1</div><div class="step-t"><strong>Selecciona</strong> tu síntoma principal</div></div>
-      <div class="step"><div class="step-n">2</div><div class="step-t"><strong>Responde</strong> 7 preguntas rápidas</div></div>
-      <div class="step"><div class="step-n">3</div><div class="step-t"><strong>Recibe</strong> tu nivel de urgencia + informe IA</div></div>
-    </div>
-
-    <div class="foot">NexaCare · TFG SMR 2025–2026 · Pablo Esteban · Herramienta orientativa, no diagnóstico médico</div>
-  </div>
-
-  <!-- ══ DERECHA ══ -->
-  <div class="right">
-    <!-- Monitor EKG -->
-    <div class="monitor">
-      <div class="mon-title">Monitor de signos · NexaCare Live</div>
-      <div class="ekg-wrap">
-        <canvas id="ekg" width="480" height="52"></canvas>
-      </div>
-    </div>
-
-    <!-- Niveles -->
-    <div class="niveles">
-      <div class="nivel-row">
-        <div class="nivel-dot" style="background:#28b86e;color:#28b86e;"></div>
-        <div class="nivel-info">
-          <div class="nivel-name" style="color:#28b86e;">VERDE — Leve</div>
-          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b1" style="background:#28b86e;"></div></div>
-        </div>
-        <div class="nivel-pct" style="color:#28b86e;">15%</div>
-      </div>
-      <div class="nivel-row">
-        <div class="nivel-dot" style="background:#d4a020;color:#d4a020;"></div>
-        <div class="nivel-info">
-          <div class="nivel-name" style="color:#d4a020;">AMARILLO — Moderado</div>
-          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b2" style="background:#d4a020;"></div></div>
-        </div>
-        <div class="nivel-pct" style="color:#d4a020;">45%</div>
-      </div>
-      <div class="nivel-row">
-        <div class="nivel-dot" style="background:#e87228;color:#e87228;"></div>
-        <div class="nivel-info">
-          <div class="nivel-name" style="color:#e87228;">NARANJA — Urgente</div>
-          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b3" style="background:#e87228;"></div></div>
-        </div>
-        <div class="nivel-pct" style="color:#e87228;">70%</div>
-      </div>
-      <div class="nivel-row">
-        <div class="nivel-dot" style="background:#e84040;color:#e84040;animation:glow 1s ease-in-out infinite;"></div>
-        <div class="nivel-info">
-          <div class="nivel-name" style="color:#e84040;">ROJO — Emergencia</div>
-          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b4" style="background:#e84040;"></div></div>
-        </div>
-        <div class="nivel-pct" style="color:#e84040;">95%</div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-v">⚡</div>
-        <div class="stat-l">&lt; 2 min resultado</div>
-      </div>
-      <div class="stat">
-        <div class="stat-v">🤖</div>
-        <div class="stat-l">IA Groq + Claude</div>
-      </div>
-      <div class="stat">
-        <div class="stat-v">📄</div>
-        <div class="stat-l">Informe PDF</div>
-      </div>
-    </div>
-
-    <div class="aviso">⚠️ Herramienta orientativa — No sustituye la valoración médica profesional</div>
-  </div>
-</div>
-
-<script>
-// ── Barras de nivel con animación al cargar ──────────────────────────────────
-setTimeout(function(){
-  document.getElementById('b1').style.width='15%';
-  document.getElementById('b2').style.width='45%';
-  document.getElementById('b3').style.width='70%';
-  document.getElementById('b4').style.width='95%';
-}, 600);
-
-// ── EKG animado en canvas ────────────────────────────────────────────────────
+    # Landing fullscreen — inyectado como overlay position:fixed en el documento padre
+    components.html("""<script>
 (function(){
-  var cv = document.getElementById('ekg');
-  if(!cv) return;
-  var ctx = cv.getContext('2d');
-  var W = cv.width, H = cv.height;
-  var pts = [], speed = 2.2, x = 0;
+  var doc = window.parent.document;
+  if (doc.getElementById('nx-landing-full')) return;
 
-  // Generar forma EKG una vez
-  function ekgY(t){
-    var cycle = t % 120;
-    if(cycle < 20) return H/2 + Math.sin(cycle/20*Math.PI)*4;
-    if(cycle < 30) return H/2 - 22;
-    if(cycle < 36) return H/2 + 14;
-    if(cycle < 42) return H/2 - 18;
-    if(cycle < 50) return H/2 + 6;
-    if(cycle < 65) return H/2 + Math.sin((cycle-65)/15*Math.PI)*5;
-    return H/2 + Math.sin(cycle/20*Math.PI)*2;
+  if (!doc.getElementById('nx-landing-css')) {
+    var sty = doc.createElement('style');
+    sty.id = 'nx-landing-css';
+    sty.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800;900&display=swap');
+      #nx-landing-full *,#nx-landing-full *::before,#nx-landing-full *::after{box-sizing:border-box;margin:0;padding:0;}
+      #nx-landing-full{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;position:fixed;inset:0;z-index:9999;background:#060f1e;color:#e2eaf6;overflow:hidden;}
+      #nx-landing-full::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(37,90,210,.18) 0%,transparent 65%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(40,184,110,.10) 0%,transparent 60%),radial-gradient(ellipse 90% 40% at 50% 50%,rgba(61,142,248,.06) 0%,transparent 70%);}
+      #nx-landing-full::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(61,142,248,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(61,142,248,.04) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
+      #nx-landing-full .root{position:relative;z-index:10;display:grid;grid-template-columns:1fr 1fr;height:100%;width:100%;overflow:hidden;}
+      #nx-landing-full .left{display:flex;flex-direction:column;justify-content:center;padding:32px 40px 24px 44px;position:relative;}
+      #nx-landing-full .badge{display:inline-flex;align-items:center;gap:8px;width:fit-content;background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.28);color:#5ba8ff;padding:6px 16px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:22px;animation:nxUp .5s cubic-bezier(.22,.68,0,1.2) both .05s;}
+      #nx-landing-full .bdot{width:7px;height:7px;border-radius:50%;background:#3d8ef8;box-shadow:0 0 8px #3d8ef8;animation:nxGlow 2s ease-in-out infinite;}
+      #nx-landing-full .logo{font-size:clamp(3.2rem,5.5vw,5.2rem);font-weight:900;letter-spacing:-3px;line-height:.9;margin-bottom:16px;animation:nxUp .7s cubic-bezier(.22,.68,0,1.2) both .12s;}
+      #nx-landing-full .logo-nexa{color:#e2eaf6;}
+      #nx-landing-full .logo-care{background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nxShine 3.5s linear infinite;}
+      #nx-landing-full .logo-cross{display:inline-block;width:.18em;height:.9em;background:#3d8ef8;border-radius:2px;margin-right:4px;vertical-align:middle;box-shadow:0 0 18px rgba(61,142,248,.8);animation:nxCrossPop .5s cubic-bezier(.22,.68,0,1.2) both .05s;position:relative;}
+      #nx-landing-full .logo-cross::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:.9em;height:.18em;background:#3d8ef8;border-radius:2px;}
+      #nx-landing-full .sub{font-size:1.1rem;font-weight:600;color:#a8c8e8;line-height:1.5;max-width:440px;margin-bottom:10px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
+      #nx-landing-full .desc{font-size:.88rem;color:#4a6888;line-height:1.7;max-width:440px;margin-bottom:24px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
+      #nx-landing-full .steps{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .34s;}
+      #nx-landing-full .step{display:flex;align-items:center;gap:14px;}
+      #nx-landing-full .step-n{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:rgba(61,142,248,.12);border:1px solid rgba(61,142,248,.3);color:#3d8ef8;font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+      #nx-landing-full .step-t{font-size:.88rem;color:#7a9ab8;}
+      #nx-landing-full .step-t strong{color:#c8dff2;font-weight:700;}
+      #nx-landing-full .nx-cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:360px;padding:15px 28px;background:linear-gradient(135deg,#3d8ef8,#1a6fd4);color:#fff;font-size:1.05rem;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 28px rgba(61,142,248,.4);transition:transform .15s,box-shadow .15s;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .42s;letter-spacing:.01em;font-family:inherit;}
+      #nx-landing-full .nx-cta-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 14px 40px rgba(61,142,248,.6);}
+      #nx-landing-full .nx-cta-btn:active{transform:translateY(0) scale(.98);}
+      #nx-landing-full .foot{font-size:.73rem;color:#2e4a66;margin-top:12px;animation:nxUp .4s ease both .7s;}
+      #nx-landing-full .right{display:flex;flex-direction:column;justify-content:center;padding:28px 44px 24px 32px;gap:14px;position:relative;}
+      #nx-landing-full .right::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;background:linear-gradient(to bottom,transparent,rgba(61,142,248,.25),transparent);}
+      #nx-landing-full .monitor{background:rgba(6,15,30,.9);border:1px solid rgba(61,142,248,.2);border-radius:16px;padding:16px 20px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .4s;position:relative;overflow:hidden;}
+      #nx-landing-full .monitor::before{content:'● REC';position:absolute;top:12px;right:14px;font-size:.65rem;font-weight:700;color:#e84040;letter-spacing:.08em;animation:nxRecBlink 1.4s ease-in-out infinite;}
+      #nx-landing-full .mon-title{font-size:.65rem;font-weight:700;color:#3d5470;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;}
+      #nx-landing-full .ekg-wrap{height:52px;overflow:hidden;position:relative;}
+      #nx-landing-full canvas#ekg{display:block;}
+      #nx-landing-full .niveles{display:flex;flex-direction:column;gap:8px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .5s;}
+      #nx-landing-full .nivel-row{background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.1);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:14px;transition:border-color .2s,background .2s;}
+      #nx-landing-full .nivel-row:hover{border-color:rgba(61,142,248,.3);background:rgba(10,22,45,.9);}
+      #nx-landing-full .nivel-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;animation:nxGlow 2s ease-in-out infinite;}
+      #nx-landing-full .nivel-info{flex:1;}
+      #nx-landing-full .nivel-name{font-size:.88rem;font-weight:700;margin-bottom:4px;}
+      #nx-landing-full .nivel-bar-track{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
+      #nx-landing-full .nivel-bar-fill{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.22,.68,0,1.2);}
+      #nx-landing-full .nivel-pct{font-size:.78rem;font-weight:800;flex-shrink:0;min-width:36px;text-align:right;}
+      #nx-landing-full .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;animation:nxUp .6s cubic-bezier(.22,.68,0,1.2) both .62s;}
+      #nx-landing-full .stat{background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.12);border-radius:12px;padding:12px 14px;text-align:center;}
+      #nx-landing-full .stat-v{font-size:1.5rem;font-weight:900;color:#e2eaf6;letter-spacing:-1px;line-height:1;}
+      #nx-landing-full .stat-l{font-size:.62rem;font-weight:700;color:#3d5470;text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
+      #nx-landing-full .aviso{display:flex;align-items:center;gap:8px;background:rgba(212,160,32,.05);border:1px solid rgba(212,160,32,.18);color:#9a7828;padding:8px 14px;border-radius:10px;font-size:.75rem;line-height:1.45;animation:nxUp .4s ease both .72s;}
+      @keyframes nxUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+      @keyframes nxShine{0%{background-position:0% center;}100%{background-position:200% center;}}
+      @keyframes nxGlow{0%,100%{box-shadow:0 0 5px currentColor;}50%{box-shadow:0 0 14px currentColor,0 0 28px currentColor;}}
+      @keyframes nxRecBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
+      @keyframes nxCrossPop{0%{transform:scaleY(0);}100%{transform:scaleY(1);}}
+    `;
+    doc.head.appendChild(sty);
   }
 
-  var t = 0;
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    // Línea de fondo
-    ctx.strokeStyle='rgba(61,142,248,.08)';
-    ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  var ov = doc.createElement('div');
+  ov.id = 'nx-landing-full';
+  ov.innerHTML = '<div class="root">'
+    + '<div class="left">'
+    + '<div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA · TFG SMR 2025–2026</div>'
+    + '<div class="logo"><span class="logo-nexa"><span class="logo-cross"></span>Nexa</span><span class="logo-care">Care</span></div>'
+    + '<p class="sub">Tu asistente de triaje médico personal, impulsado por Inteligencia Artificial</p>'
+    + '<p class="desc">Evalúa tus síntomas en menos de 2 minutos. Obtén tu nivel de urgencia, análisis clínico con IA y un informe PDF listo para mostrar a tu médico — sin registro, gratis.</p>'
+    + '<div class="steps">'
+    + '<div class="step"><div class="step-n">1</div><div class="step-t"><strong>Selecciona</strong> tu síntoma principal</div></div>'
+    + '<div class="step"><div class="step-n">2</div><div class="step-t"><strong>Responde</strong> 7 preguntas rápidas</div></div>'
+    + '<div class="step"><div class="step-n">3</div><div class="step-t"><strong>Recibe</strong> tu nivel de urgencia + informe IA</div></div>'
+    + '</div>'
+    + '<button id="nx-go" class="nx-cta-btn">🩺 Iniciar triaje ahora</button>'
+    + '<div class="foot">NexaCare · TFG SMR 2025–2026 · Pablo Esteban · Herramienta orientativa, no diagnóstico médico</div>'
+    + '</div>'
+    + '<div class="right">'
+    + '<div class="monitor"><div class="mon-title">Monitor de signos · NexaCare Live</div><div class="ekg-wrap"><canvas id="ekg" height="52"></canvas></div></div>'
+    + '<div class="niveles">'
+    + '<div class="nivel-row"><div class="nivel-dot" style="background:#28b86e;color:#28b86e;"></div><div class="nivel-info"><div class="nivel-name" style="color:#28b86e;">VERDE — Leve</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b1" style="background:#28b86e;"></div></div></div><div class="nivel-pct" style="color:#28b86e;">15%</div></div>'
+    + '<div class="nivel-row"><div class="nivel-dot" style="background:#d4a020;color:#d4a020;"></div><div class="nivel-info"><div class="nivel-name" style="color:#d4a020;">AMARILLO — Moderado</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b2" style="background:#d4a020;"></div></div></div><div class="nivel-pct" style="color:#d4a020;">45%</div></div>'
+    + '<div class="nivel-row"><div class="nivel-dot" style="background:#e87228;color:#e87228;"></div><div class="nivel-info"><div class="nivel-name" style="color:#e87228;">NARANJA — Urgente</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b3" style="background:#e87228;"></div></div></div><div class="nivel-pct" style="color:#e87228;">70%</div></div>'
+    + '<div class="nivel-row"><div class="nivel-dot" style="background:#e84040;color:#e84040;animation:nxGlow 1s ease-in-out infinite;"></div><div class="nivel-info"><div class="nivel-name" style="color:#e84040;">ROJO — Emergencia</div><div class="nivel-bar-track"><div class="nivel-bar-fill" id="b4" style="background:#e84040;"></div></div></div><div class="nivel-pct" style="color:#e84040;">95%</div></div>'
+    + '</div>'
+    + '<div class="stats">'
+    + '<div class="stat"><div class="stat-v">⚡</div><div class="stat-l">&lt; 2 min resultado</div></div>'
+    + '<div class="stat"><div class="stat-v">🤖</div><div class="stat-l">IA Groq + Claude</div></div>'
+    + '<div class="stat"><div class="stat-v">📄</div><div class="stat-l">Informe PDF</div></div>'
+    + '</div>'
+    + '<div class="aviso">⚠️ Herramienta orientativa — No sustituye la valoración médica profesional</div>'
+    + '</div></div>';
+  doc.body.appendChild(ov);
 
-    // EKG
-    pts.push({x: x % W, y: ekgY(t)});
-    if(pts.length > W/speed + 2) pts.shift();
-    t += speed;
-    x += speed;
+  ov.querySelector('#nx-go').onclick = function() {
+    ov.style.transition = 'opacity .25s';
+    ov.style.opacity = '0';
+    setTimeout(function() {
+      ov.remove();
+      doc.getElementById('nx-landing-css') && doc.getElementById('nx-landing-css').remove();
+      var realBtn = doc.querySelector('#nx-real-cta button');
+      if (realBtn) realBtn.click();
+    }, 250);
+  };
 
-    ctx.lineWidth = 2;
-    var grad = ctx.createLinearGradient(0,0,W,0);
-    grad.addColorStop(0,'rgba(61,142,248,0)');
-    grad.addColorStop(0.6,'rgba(61,142,248,.8)');
-    grad.addColorStop(0.85,'rgba(40,184,110,.9)');
-    grad.addColorStop(1,'rgba(61,142,248,.2)');
-    ctx.strokeStyle = grad;
-    ctx.shadowColor = '#3d8ef8';
-    ctx.shadowBlur = 7;
-    ctx.beginPath();
-    for(var i=0;i<pts.length;i++){
-      var px = i * speed;
-      if(i===0) ctx.moveTo(px, pts[i].y);
-      else ctx.lineTo(px, pts[i].y);
+  setTimeout(function() {
+    ov.querySelector('#b1').style.width = '15%';
+    ov.querySelector('#b2').style.width = '45%';
+    ov.querySelector('#b3').style.width = '70%';
+    ov.querySelector('#b4').style.width = '95%';
+  }, 600);
+
+  (function() {
+    var cv = ov.querySelector('#ekg');
+    if (!cv) return;
+    var wrap = cv.parentElement;
+    cv.width = (wrap && wrap.offsetWidth) || 480;
+    cv.height = 52;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    var pts = [], speed = 2.2, t = 0;
+    function ekgY(v) {
+      var c = v % 120;
+      if(c < 20) return H/2 + Math.sin(c/20*Math.PI)*4;
+      if(c < 30) return H/2 - 22;
+      if(c < 36) return H/2 + 14;
+      if(c < 42) return H/2 - 18;
+      if(c < 50) return H/2 + 6;
+      if(c < 65) return H/2 + Math.sin((c-65)/15*Math.PI)*5;
+      return H/2 + Math.sin(c/20*Math.PI)*2;
     }
-    ctx.stroke();
-
-    // Punto brillante en la punta
-    var last = pts[pts.length-1];
-    if(last){
+    function draw() {
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle='rgba(61,142,248,.08)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+      pts.push({y:ekgY(t)});
+      if(pts.length > Math.floor(W/speed)+2) pts.shift();
+      t += speed;
+      ctx.lineWidth=2;
+      var g=ctx.createLinearGradient(0,0,W,0);
+      g.addColorStop(0,'rgba(61,142,248,0)');
+      g.addColorStop(0.6,'rgba(61,142,248,.8)');
+      g.addColorStop(0.85,'rgba(40,184,110,.9)');
+      g.addColorStop(1,'rgba(61,142,248,.2)');
+      ctx.strokeStyle=g;ctx.shadowColor='#3d8ef8';ctx.shadowBlur=7;
       ctx.beginPath();
-      ctx.arc(pts.length*speed, last.y, 3, 0, Math.PI*2);
-      ctx.fillStyle='#7fc3ff';
-      ctx.shadowBlur=12;ctx.shadowColor='#3d8ef8';
-      ctx.fill();
+      for(var i=0;i<pts.length;i++){if(i===0)ctx.moveTo(i*speed,pts[i].y);else ctx.lineTo(i*speed,pts[i].y);}
+      ctx.stroke();
+      var last=pts[pts.length-1];
+      if(last){ctx.beginPath();ctx.arc(pts.length*speed,last.y,3,0,Math.PI*2);ctx.fillStyle='#7fc3ff';ctx.shadowBlur=12;ctx.shadowColor='#3d8ef8';ctx.fill();}
+      requestAnimationFrame(draw);
     }
-    requestAnimationFrame(draw);
-  }
-  draw();
+    draw();
+  })();
 })();
-</script>
-</body>
-</html>"""
-
-    components.html(_LANDING_HTML, height=780, scrolling=False)
-
-    # CTA real de Streamlit — funciona siempre
-    st.markdown("<div style='margin-top:-8px;'>", unsafe_allow_html=True)
-    _, col_cta, _ = st.columns([1, 2, 1])
-    with col_cta:
-        if st.button(t("btn_start"), use_container_width=True,
-                     type="primary", key="btn_landing_start"):
-            st.session_state["_from_landing"] = True
-            ir("home")
-    st.markdown("</div>", unsafe_allow_html=True)
+</script>""", height=0)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2638,84 +2441,6 @@ elif st.session_state.pantalla == "resultado":
       requestAnimationFrame(step);
     }})();
     </script>""", height=0)
-
-    # — QR dinámico escaneable —
-    _qr_url = NEXACARE_URL  # siempre apunta al app público
-    _qr = qrcode.QRCode(box_size=4, border=2)
-    _qr.add_data(_qr_url)
-    _qr.make(fit=True)
-    _qr_img = _qr.make_image(fill_color="#e2eaf6", back_color="#071426")
-    _qr_buf = io.BytesIO()
-    _qr_img.save(_qr_buf, format="PNG")
-    _qr_b64 = base64.b64encode(_qr_buf.getvalue()).decode()
-    st.markdown(f"""
-<div style="display:flex;align-items:center;gap:12px;
-  background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
-  padding:9px 16px;margin-bottom:8px;">
-  <img id="nx-qr-thumb" src="data:image/png;base64,{_qr_b64}" width="54" height="54"
-    style="border-radius:7px;flex-shrink:0;cursor:zoom-in;
-      transition:transform .18s,box-shadow .18s;"
-    onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 0 0 3px rgba(61,142,248,.5)'"
-    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'"
-    alt="QR informe"/>
-  <div>
-    <div style="font-size:.68rem;font-weight:700;color:var(--txt3);
-      text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
-      📱 Escanea para ver este informe en tu móvil</div>
-    <div style="font-size:.76rem;color:var(--txt2);">
-      Pulsa el QR para ampliarlo · Comparte con tu médico al instante</div>
-  </div>
-</div>""", unsafe_allow_html=True)
-
-    # Modal QR — inyectado en el documento padre via components.html
-    components.html(f"""
-<script>
-(function() {{
-  var doc = window.parent.document;
-
-  // Crear overlay si no existe
-  if (!doc.getElementById('nx-qr-overlay')) {{
-    var ov = doc.createElement('div');
-    ov.id = 'nx-qr-overlay';
-    ov.style.cssText = [
-      'display:none','position:fixed','inset:0','z-index:99999',
-      'background:rgba(0,0,0,.82)','backdrop-filter:blur(8px)',
-      'align-items:center','justify-content:center','cursor:zoom-out'
-    ].join(';');
-    ov.innerHTML = [
-      '<div style="background:#0d1e38;border:2px solid rgba(61,142,248,.5);',
-      'border-radius:22px;padding:30px;text-align:center;',
-      'animation:nxQrPop .32s cubic-bezier(.22,.68,0,1.2) both;">',
-      '<img src="data:image/png;base64,{_qr_b64}" width="280" height="280"',
-      ' style="border-radius:14px;display:block;" />',
-      '<div style="font-size:.8rem;color:#7a95b8;margin-top:16px;">',
-      'Toca en cualquier parte para cerrar</div></div>'
-    ].join('');
-    ov.onclick = function() {{ ov.style.display = 'none'; }};
-    // Animación
-    var st = doc.createElement('style');
-    st.textContent = '@keyframes nxQrPop{{0%{{opacity:0;transform:scale(.7)}}100%{{opacity:1;transform:scale(1)}}}}';
-    doc.head.appendChild(st);
-    doc.body.appendChild(ov);
-  }}
-
-  // Conectar el thumbnail al overlay
-  function hookThumb() {{
-    var thumb = doc.getElementById('nx-qr-thumb');
-    if (thumb) {{
-      thumb.onclick = function(e) {{
-        e.stopPropagation();
-        var ov = doc.getElementById('nx-qr-overlay');
-        ov.style.display = 'flex';
-      }};
-    }} else {{
-      setTimeout(hookThumb, 200);
-    }}
-  }}
-  hookThumb();
-}})();
-</script>
-""", height=0)
 
     # — Fila de stats (3 columnas) —
     st.markdown(f"""
