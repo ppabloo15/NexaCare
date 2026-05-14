@@ -1176,8 +1176,8 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
 }
 </style>""", unsafe_allow_html=True)
 
-    # Botón real de Streamlit (off-screen, se activa desde el overlay JS)
-    st.markdown('<div id="nx-real-cta" style="position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;">', unsafe_allow_html=True)
+    # Botón real de Streamlit (totalmente invisible — activado por JS)
+    st.markdown('<div id="nx-real-cta" style="position:absolute;width:0;height:0;overflow:hidden;clip:rect(0,0,0,0);border:0;padding:0;margin:0;">', unsafe_allow_html=True)
     if st.button("Iniciar triaje", key="btn_landing_start", type="primary"):
         st.session_state["_from_landing"] = True
         ir("home")
@@ -1288,7 +1288,11 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
       ov.remove();
       doc.getElementById('nx-landing-css') && doc.getElementById('nx-landing-css').remove();
       var realBtn = doc.querySelector('#nx-real-cta button');
-      if (realBtn) realBtn.click();
+      if (realBtn) {
+        ['mousedown','mouseup','click'].forEach(function(t) {
+          realBtn.dispatchEvent(new MouseEvent(t, {bubbles:true, cancelable:true}));
+        });
+      }
     }, 250);
   };
 
