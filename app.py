@@ -2470,70 +2470,8 @@ elif st.session_state.pantalla == "resultado":
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # — Imagen PNG del resultado (descargable) —
-    def _generar_png_resultado() -> bytes:
-        """Genera una imagen PNG con la tarjeta del resultado para compartir."""
-        from PIL import Image, ImageDraw, ImageFont
-        _nivel_colores = {
-            "red":    ((232, 64,  64),  (30, 10, 10)),
-            "orange": ((232, 114, 40),  (30, 18, 8)),
-            "yellow": ((212, 160, 32),  (28, 24, 8)),
-            "green":  ((40,  184, 110), (8,  28, 18)),
-        }
-        _rgb, _bg_rgb = _nivel_colores.get(r["color"], ((61, 142, 248), (7, 20, 38)))
-        W, H = 800, 420
-        img = Image.new("RGB", (W, H), color=(7, 20, 38))
-        draw = ImageDraw.Draw(img)
-
-        # Franja de color lateral
-        draw.rectangle([(0, 0), (8, H)], fill=_rgb)
-
-        # Fondo suave del nivel
-        draw.rectangle([(8, 0), (W, H)], fill=(12, 28, 52))
-
-        # Título NexaCare
-        draw.text((40, 30), "NexaCare", fill=(61, 142, 248), font=None)
-
-        # Nivel de triaje
-        _nivel_txt = r.get("nivel", "RESULTADO").upper()
-        draw.rectangle([(40, 70), (W - 40, 140)], fill=_rgb + (30,) if len(_rgb) == 3 else _rgb)
-        draw.rectangle([(40, 70), (W - 40, 140)], fill=(int(_rgb[0]*0.15)+7, int(_rgb[1]*0.15)+15, int(_rgb[2]*0.15)+30))
-        draw.text((W // 2, 105), _nivel_txt, fill=_rgb, font=None, anchor="mm" if hasattr(draw, "anchor") else None)
-
-        # Porcentaje
-        draw.text((40, 160), f"Gravedad: {porcentaje}%", fill=(168, 200, 232), font=None)
-
-        # Síntoma
-        draw.text((40, 195), f"Síntoma: {sintoma}", fill=(140, 170, 210), font=None)
-
-        # Puntuación
-        draw.text((40, 230), f"Puntuación: {pts}/{total_pts}", fill=(140, 170, 210), font=None)
-
-        # Fecha
-        _fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
-        draw.text((40, 265), f"Fecha: {_fecha}", fill=(90, 120, 160), font=None)
-
-        # Recomendación (truncada)
-        _reco = r.get("recomendacion", "")[:90]
-        if len(r.get("recomendacion", "")) > 90:
-            _reco += "…"
-        draw.text((40, 310), "Recomendación:", fill=(90, 120, 160), font=None)
-        draw.text((40, 335), _reco, fill=(140, 170, 210), font=None)
-
-        # Pie
-        draw.text((40, H - 30), "nexacare-gja3pyzjnxfu6feejp437e.streamlit.app", fill=(50, 80, 120), font=None)
-
-        # Borde de color nivel
-        draw.rectangle([(0, 0), (W - 1, H - 1)], outline=_rgb, width=3)
-
-        _buf = io.BytesIO()
-        img.save(_buf, format="PNG", optimize=True)
-        return _buf.getvalue()
-
-    _png_resultado = _generar_png_resultado()
-
-    # — Botones de acción (3 columnas) —
-    sc4, sc_png, sc5 = st.columns([1, 1, 1], gap="small")
+    # — Botones de acción (2 columnas) —
+    sc4, sc5 = st.columns([1, 1], gap="small")
     if _pdf:
         sc4.download_button(
             t('btn_pdf'), data=_pdf,
@@ -2546,14 +2484,6 @@ elif st.session_state.pantalla == "resultado":
             'border-radius:10px;padding:10px;font-size:.75rem;color:#e84040;text-align:center;">'
             '⚠️ Error al generar PDF</div>', unsafe_allow_html=True,
         )
-    sc_png.download_button(
-        "🖼️ Guardar imagen",
-        data=_png_resultado,
-        file_name=f"NexaCare_resultado_{datetime.now().strftime('%Y%m%d_%H%M')}.png",
-        mime="image/png",
-        use_container_width=True,
-        key="png_top",
-    )
     if sc5.button(t('btn_nueva'), use_container_width=True, key="btn_nueva_top"):
         for _k in ("_pdf", "_email_ok", "_email_err_mail", "_pdf_err", "webhook_enviado"):
             st.session_state.pop(_k, None)
@@ -2664,14 +2594,29 @@ elif st.session_state.pantalla == "resultado":
                         location=[_flat, _flon],
                         zoom_start=13,
                         tiles="CartoDB dark_matter",
+                        attr="&copy; CartoDB",
                     )
-                    # Marcador de usuario
-                    folium.Marker(
+                    # Marcador de usuario (CircleMarker — siempre funciona sin iconos externos)
+                    folium.CircleMarker(
                         location=[_flat, _flon],
-                        popup="📍 Tu ubicación",
+                        radius=10,
+                        color="#3d8ef8",
+                        fill=True,
+                        fill_color="#3d8ef8",
+                        fill_opacity=0.9,
+                        popup=folium.Popup("📍 <b>Tu ubicación</b>", max_width=160),
                         tooltip="Tu ubicación",
-                        icon=folium.Icon(color="blue", icon="user", prefix="fa"),
                     ).add_to(_fmap)
+                    # Anillo exterior para el marcador de usuario
+                    folium.CircleMarker(
+                        location=[_flat, _flon],
+                        radius=16,
+                        color="#3d8ef8",
+                        fill=False,
+                        weight=2,
+                        opacity=0.5,
+                    ).add_to(_fmap)
+
                     # Marcadores de centros
                     _color_map = {"red": "red", "orange": "orange", "yellow": "beige", "green": "green"}
                     _pin_color = _color_map.get(r["color"], "green")
@@ -2681,23 +2626,25 @@ elif st.session_state.pantalla == "resultado":
                         if _clat is None or _clon is None:
                             continue
                         _ic = "plus-sign" if _c.get("es_hospital") else "home"
+                        _popup_html = (
+                            f"<b style='font-size:13px'>{_html_mod.escape(_c['nombre'])}</b><br>"
+                            f"<span style='color:#888'>{_html_mod.escape(_c['tipo'])}</span><br>"
+                            f"📍 {formatear_distancia(_c['distancia_m'])}"
+                            + ("<br><span style='color:red'>🚨 URGENCIAS</span>" if _c.get("urgencias") else "")
+                            + f"<br><a href='{_c.get('maps_url','#')}' target='_blank'>🗺️ Cómo llegar</a>"
+                        )
                         folium.Marker(
                             location=[_clat, _clon],
-                            popup=folium.Popup(
-                                f"<b>{_html_mod.escape(_c['nombre'])}</b><br>{_html_mod.escape(_c['tipo'])}<br>"
-                                f"📍 {formatear_distancia(_c['distancia_m'])}"
-                                f"{'<br>🚨 URGENCIAS' if _c.get('urgencias') else ''}",
-                                max_width=220,
-                            ),
+                            popup=folium.Popup(_popup_html, max_width=240),
                             tooltip=_c["nombre"],
                             icon=folium.Icon(color=_pin_color, icon=_ic, prefix="glyphicon"),
                         ).add_to(_fmap)
-                        # Línea desde usuario hasta centro
+                        # Línea punteada desde usuario hasta centro
                         folium.PolyLine(
                             locations=[[_flat, _flon], [_clat, _clon]],
-                            color="#3d8ef8", weight=1.5, opacity=0.45, dash_array="6",
+                            color="#3d8ef8", weight=1.5, opacity=0.4, dash_array="5 8",
                         ).add_to(_fmap)
-                    st_folium(_fmap, use_container_width=True, height=280, returned_objects=[])
+                    st_folium(_fmap, use_container_width=True, height=290, returned_objects=[])
 
                 # — Tarjetas de centros —
                 for i, c in enumerate(st.session_state.centros):
