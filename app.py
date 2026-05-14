@@ -1160,18 +1160,21 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 [data-testid="stVerticalBlock"] { gap: 0 !important; }
 iframe { border: none !important; display: block !important; }
 /* Botón CTA landing */
-#nx-landing-cta button {
-  background: linear-gradient(135deg,#2d6fd4 0%,#3d8ef8 50%,#5ba8ff 100%) !important;
-  color: #fff !important; border: none !important; border-radius: 18px !important;
-  min-height: 58px !important; font-size: 1.1rem !important; font-weight: 800 !important;
-  letter-spacing: .02em !important;
-  box-shadow: 0 12px 32px rgba(61,142,248,.45) !important;
-  transition: transform .2s, box-shadow .2s !important;
-  width: 100% !important;
+#nx-landing-cta button,
+#nx-landing-cta button:focus,
+#nx-landing-cta [data-testid="baseButton-primary"] {
+  background: linear-gradient(135deg,#1a5fc8 0%,#3d8ef8 45%,#5ba8ff 100%) !important;
+  color: #fff !important; border: none !important; border-radius: 16px !important;
+  min-height: 60px !important; font-size: 1.12rem !important; font-weight: 800 !important;
+  letter-spacing: .03em !important;
+  box-shadow: 0 10px 36px rgba(61,142,248,.55), 0 0 0 0 rgba(61,142,248,.2) !important;
+  transition: transform .18s, box-shadow .18s !important;
+  width: 100% !important; outline: none !important;
 }
-#nx-landing-cta button:hover {
+#nx-landing-cta button:hover,
+#nx-landing-cta [data-testid="baseButton-primary"]:hover {
   transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 18px 44px rgba(61,142,248,.6) !important;
+  box-shadow: 0 18px 50px rgba(61,142,248,.7), 0 0 60px rgba(61,142,248,.2) !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -1214,11 +1217,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .logo-care{background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);
   background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;
   animation:shine 3.5s linear infinite;}
-.logo-cross{display:inline-block;width:.16em;height:.85em;background:#3d8ef8;
-  border-radius:2px;margin-right:3px;vertical-align:middle;
-  box-shadow:0 0 16px rgba(61,142,248,.8);position:relative;}
-.logo-cross::after{content:'';position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);width:.85em;height:.16em;background:#3d8ef8;border-radius:2px;}
+.logo-cross{color:#3d8ef8;font-weight:900;margin-right:2px;
+  text-shadow:0 0 18px rgba(61,142,248,.9),0 0 40px rgba(61,142,248,.4);
+  display:inline;}
 .sub{font-size:1rem;font-weight:600;color:#a8c8e8;line-height:1.5;max-width:420px;
   margin-bottom:8px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
 .desc{font-size:.84rem;color:#4a6888;line-height:1.65;max-width:420px;
@@ -1276,7 +1277,7 @@ canvas#ekg{display:block;width:100%;height:48px;}
   <div class="left">
     <div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA · TFG SMR 2025–2026</div>
     <div class="logo">
-      <span class="logo-nexa"><span class="logo-cross"></span>Nexa</span><span class="logo-care">Care</span>
+      <span class="logo-nexa"><span class="logo-cross">+</span>Nexa</span><span class="logo-care">Care</span>
     </div>
     <p class="sub">Tu asistente de triaje médico personal, impulsado por Inteligencia Artificial</p>
     <p class="desc">Evalúa tus síntomas en menos de 2 minutos. Obtén tu nivel de urgencia, análisis clínico con IA y un informe PDF — sin registro, gratis.</p>
