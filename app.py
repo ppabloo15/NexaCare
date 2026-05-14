@@ -1160,21 +1160,35 @@ section[data-testid="stMain"] > div { padding-top: 0 !important; }
 [data-testid="stVerticalBlock"] { gap: 0 !important; }
 iframe { border: none !important; display: block !important; }
 /* Botón CTA landing */
+@keyframes nxPulse {
+  0%   { box-shadow: 0 8px 32px rgba(61,142,248,.6), 0 0 0 0 rgba(61,142,248,.35); }
+  70%  { box-shadow: 0 8px 32px rgba(61,142,248,.4), 0 0 0 18px rgba(61,142,248,0); }
+  100% { box-shadow: 0 8px 32px rgba(61,142,248,.6), 0 0 0 0 rgba(61,142,248,0); }
+}
 #nx-landing-cta button,
 #nx-landing-cta button:focus,
 #nx-landing-cta [data-testid="baseButton-primary"] {
-  background: linear-gradient(135deg,#1a5fc8 0%,#3d8ef8 45%,#5ba8ff 100%) !important;
-  color: #fff !important; border: none !important; border-radius: 14px !important;
-  min-height: 52px !important; font-size: 1.05rem !important; font-weight: 800 !important;
-  letter-spacing: .03em !important;
-  box-shadow: 0 10px 36px rgba(61,142,248,.55) !important;
-  transition: transform .18s, box-shadow .18s !important;
+  background: linear-gradient(135deg, #1557c0 0%, #2d7ef0 40%, #5aaeff 100%) !important;
+  color: #fff !important;
+  border: 1px solid rgba(120,190,255,.25) !important;
+  border-radius: 50px !important;
+  min-height: 56px !important;
+  padding: 0 44px !important;
+  font-size: 1.08rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  animation: nxPulse 2.2s ease-in-out infinite !important;
+  transition: transform .18s, filter .18s !important;
   outline: none !important;
+  position: relative !important;
 }
 #nx-landing-cta button:hover,
 #nx-landing-cta [data-testid="baseButton-primary"]:hover {
-  transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 18px 50px rgba(61,142,248,.7) !important;
+  transform: translateY(-3px) scale(1.04) !important;
+  filter: brightness(1.15) !important;
+  animation: none !important;
+  box-shadow: 0 20px 56px rgba(61,142,248,.75) !important;
 }
 </style>""", unsafe_allow_html=True)
 
