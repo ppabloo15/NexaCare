@@ -11,7 +11,7 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nexacare.db"
 
 
 def init_db() -> None:
-    """Crea la tabla de consultas si no existe y aplica migraciones de columnas."""
+    """Crea las tablas si no existen y aplica migraciones de columnas."""
     conn = sqlite3.connect(DB_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS consultas (
@@ -26,6 +26,14 @@ def init_db() -> None:
             informe_ai        TEXT,
             email             TEXT,
             token_informe     TEXT    UNIQUE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp      TEXT    NOT NULL,
+            token_informe  TEXT,
+            valor          TEXT    NOT NULL
         )
     """)
     # Migraciones seguras por si la tabla ya existía sin estas columnas
@@ -115,6 +123,42 @@ def obtener_consulta_por_token(token: str) -> dict | None:
         "porcentaje": row[5], "nivel": row[6],
         "informe_ai": row[7], "email": row[8],
     }
+
+
+def guardar_feedback(valor: str, token_informe: str | None = None) -> None:
+    """Guarda la valoración del usuario al finalizar el triaje."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute(
+        "INSERT INTO feedback (timestamp, token_informe, valor) VALUES (?, ?, ?)",
+        (datetime.now().strftime("%d/%m/%Y %H:%M"), token_informe, valor),
+    )
+    conn.commit()
+    conn.close()
+
+
+def obtener_tendencia_sintomas(dias: int = 14) -> list[dict]:
+    """Devuelve conteo de consultas agrupadas por fecha y síntoma (últimos N días)."""
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute(
+        """SELECT substr(timestamp,7,4)||'-'||substr(timestamp,4,2)||'-'||substr(timestamp,1,2) AS fecha,
+                  sintoma, COUNT(*) as n
+           FROM consultas
+           GROUP BY fecha, sintoma
+           ORDER BY fecha DESC
+           LIMIT 200"""
+    ).fetchall()
+    conn.close()
+    return [{"fecha": r[0], "sintoma": r[1], "count": r[2]} for r in rows]
+
+
+def obtener_stats_feedback() -> dict:
+    """Devuelve el recuento de feedback por valor."""
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute(
+        "SELECT valor, COUNT(*) FROM feedback GROUP BY valor"
+    ).fetchall()
+    conn.close()
+    return dict(rows)
 
 
 def obtener_stats() -> dict:

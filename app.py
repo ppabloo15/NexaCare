@@ -19,7 +19,11 @@ from logica_triaje import (
     calcular_nivel_triaje, obtener_preguntas,
     puntuacion_maxima as pts_max, SINTOMAS,
 )
-from database import init_db, guardar_consulta, obtener_consultas, obtener_stats
+import plotly.graph_objects as go
+from database import (
+    init_db, guardar_consulta, obtener_consultas, obtener_stats,
+    guardar_feedback, obtener_tendencia_sintomas, obtener_stats_feedback,
+)
 from ai_service import (
     generar_informe_triaje, clasificar_sintoma,
     responder_pregunta, tiene_ia, tiene_ia_real,
@@ -864,12 +868,73 @@ div.stButton > button[title="Analizar síntomas"] {
 .hm-how-stitle { font-size:.82rem; font-weight:700; color:var(--txt); margin-bottom:4px; }
 .hm-how-sdesc  { font-size:.72rem; color:var(--txt3); line-height:1.5; }
 .hm-how-arrow  { font-size:1.2rem; color:var(--txt3); padding:0 6px; text-align:center; }
+
+/* ══ TOGGLE TEMA ══ */
+.nx-tema-btn {
+  position:fixed; bottom:22px; right:22px; z-index:9999;
+  width:44px; height:44px; border-radius:50%;
+  background:var(--surf); border:1.5px solid var(--bdr);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.25rem; cursor:pointer;
+  box-shadow:0 4px 18px rgba(0,0,0,.25);
+  transition:transform .2s, box-shadow .2s;
+}
+.nx-tema-btn:hover { transform:scale(1.12); box-shadow:0 6px 24px rgba(0,0,0,.35); }
+
+/* ══ FEEDBACK ══ */
+.nx-fb-row {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 0 4px;
+}
+.nx-fb-lbl {
+  font-size:.75rem; font-weight:700; color:var(--txt3);
+  text-transform:uppercase; letter-spacing:.08em;
+}
+.nx-fb-ok {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(40,184,110,.08); border:1px solid rgba(40,184,110,.22);
+  border-radius:10px; padding:10px 18px;
+  font-size:.84rem; font-weight:700; color:#28b86e;
+  animation:popIn .4s cubic-bezier(.22,.68,0,1.2) both;
+}
+
+/* ══ STAT card 4 columnas ══ */
+.rx-stat-4 {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ESTADO
-# ══════════════════════════════════════════════════════════════════════════════
+# ── CSS modo claro (se inyecta DESPUÉS del CSS base para sobreescribir variables)
+if st.session_state.get("tema") == "light":
+    st.markdown("""
+<style>
+:root {
+  --bg:     #f2f6fc !important;
+  --surf:   #ffffff !important;
+  --raised: #e8f0fe !important;
+  --hover:  #dce8fc !important;
+  --bdr:    #c5d4ed !important;
+  --bdr-s:  #d5e2f5 !important;
+  --acc:    #1a5cc8 !important;
+  --acc-g:  rgba(26,92,200,0.15) !important;
+  --acc-s:  rgba(26,92,200,0.07) !important;
+  --txt:    #0d1b2e !important;
+  --txt2:   #3a5276 !important;
+  --txt3:   #7a95b8 !important;
+  --red:    #cc1f1f !important;
+  --orange: #c45e00 !important;
+  --gold:   #a07800 !important;
+  --green:  #1a8f55 !important;
+  --red-s:  rgba(204,31,31,0.08) !important;
+  --orange-s: rgba(196,94,0,0.08) !important;
+  --gold-s: rgba(160,120,0,0.08) !important;
+  --green-s: rgba(26,143,85,0.08) !important;
+}
+html, body, .stApp { background: #f2f6fc !important; color: #0d1b2e !important; }
+div.stTextInput > div > div > input { color: #0d1b2e !important; }
+</style>""", unsafe_allow_html=True)
+
 # ══════════════════════════════════════════════════════════════════════════════
 # TRADUCCIONES  (ES / EN)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1036,7 +1101,10 @@ _DEF = {
     "webhook_enviado":  False,
     "chat_qa":          [],
     "centros":          None,
+    "coords_busq":      None,
     "ubicacion_busq":   "",
+    "tema":             "dark",
+    "feedback_dado":    False,
 }
 for k, v in _DEF.items():
     if k not in st.session_state:
@@ -1102,6 +1170,34 @@ def badge_key(nivel: str) -> str:
     if "NARANJA"  in nivel: return "NARANJA"
     return "ROJO"
 
+
+# ── Botón flotante toggle tema (visible en todas las pantallas) ──────────────
+_tema_ico  = "☀️" if st.session_state.tema == "dark" else "🌙"
+_tema_tip  = "Modo claro" if st.session_state.tema == "dark" else "Modo oscuro"
+st.markdown(f"""
+<div style="position:fixed;bottom:22px;right:22px;z-index:9999;">
+  <form id="nx-tema-form" method="get" style="margin:0;">
+    <button class="nx-tema-btn" title="{_tema_tip}" id="nx-tema-btn-el"
+      onclick="event.preventDefault();window._nxToggleTema();">{_tema_ico}</button>
+  </form>
+</div>""", unsafe_allow_html=True)
+# El toggle real se implementa con un st.button oculto
+if st.button("tema_toggle_hidden", key="nx_tema_toggle",
+             label_visibility="collapsed"):
+    st.session_state.tema = "light" if st.session_state.tema == "dark" else "dark"
+    st.rerun()
+# JS que redirige el clic al botón real de Streamlit
+components.html("""<script>
+window._nxToggleTema = function() {
+  var btns = window.parent.document.querySelectorAll('button');
+  for(var i=0;i<btns.length;i++){
+    if(btns[i].innerText.trim()==='tema_toggle_hidden'){btns[i].click();break;}
+  }
+};
+// Conectar el botón flotante al tema toggle
+var el = window.parent.document.getElementById('nx-tema-btn-el');
+if(el){ el.onclick = function(e){ e.preventDefault(); window._nxToggleTema(); }; }
+</script>""", height=0)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HEADER — visible en todas las pantallas EXCEPTO landing
@@ -1657,6 +1753,68 @@ elif st.session_state.pantalla == "dashboard" and st.session_state.admin_ok:
             f'<div class="adm-panel"><div class="adm-panel-title">Síntomas más consultados</div>{filas_sint}</div>',
             unsafe_allow_html=True)
 
+    # ── Gráfico de tendencia (B) ──────────────────────────────────────────────
+    _tendencia = obtener_tendencia_sintomas(dias=14)
+    if _tendencia:
+        # Agrupar por fecha (suma total de consultas por día, independiente del síntoma)
+        _dias_total: dict[str, int] = {}
+        _sint_dias: dict[str, dict[str, int]] = {}
+        for _row in _tendencia:
+            _f, _s, _n = _row["fecha"], _row["sintoma"], _row["count"]
+            _dias_total[_f] = _dias_total.get(_f, 0) + _n
+            _sint_dias.setdefault(_s, {})[_f] = _n
+
+        _fechas_ord = sorted(_dias_total.keys())[-14:]  # últimos 14 días
+        _total_por_dia = [_dias_total.get(_f, 0) for _f in _fechas_ord]
+
+        # Top 5 síntomas para las barras apiladas
+        _top_sint = sorted(sint_map.items(), key=lambda x: -x[1])[:5]
+        _colores_t = ["#3d8ef8","#28b86e","#d4a020","#e87228","#e84040"]
+
+        _fig = go.Figure()
+        for (_sn, _), _col in zip(_top_sint, _colores_t):
+            _vals = [_sint_dias.get(_sn, {}).get(_f, 0) for _f in _fechas_ord]
+            _fig.add_trace(go.Bar(
+                x=_fechas_ord, y=_vals, name=_sn,
+                marker_color=_col, opacity=0.88,
+            ))
+        # Línea de total
+        _fig.add_trace(go.Scatter(
+            x=_fechas_ord, y=_total_por_dia, name="Total",
+            mode="lines+markers",
+            line=dict(color="#a0c8ff", width=2.5, dash="dot"),
+            marker=dict(size=6, color="#a0c8ff"),
+        ))
+        _fig.update_layout(
+            barmode="stack",
+            title=dict(text="Tendencia de consultas (últimos 14 días)", font=dict(size=13, color="#a8c8e8")),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#7a95b8", size=11),
+            legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(size=10)),
+            margin=dict(l=10, r=10, t=40, b=10),
+            xaxis=dict(gridcolor="rgba(255,255,255,.05)", tickfont=dict(size=9)),
+            yaxis=dict(gridcolor="rgba(255,255,255,.07)", tickfont=dict(size=9)),
+            height=280,
+        )
+        st.plotly_chart(_fig, use_container_width=True, config={"displayModeBar": False})
+
+    # ── Feedback stats ─────────────────────────────────────────────────────────
+    _fb_stats = obtener_stats_feedback()
+    if _fb_stats:
+        _fb_pos = _fb_stats.get("positivo", 0)
+        _fb_neu = _fb_stats.get("neutral",  0)
+        _fb_neg = _fb_stats.get("negativo", 0)
+        _fb_tot = _fb_pos + _fb_neu + _fb_neg
+        st.markdown(
+            f'<div class="adm-panel" style="padding:14px 20px;">'
+            f'<div class="adm-panel-title">Valoraciones de pacientes ({_fb_tot} total)</div>'
+            f'<div style="display:flex;gap:18px;margin-top:8px;font-size:.85rem;">'
+            f'<span>😊 Muy útil <strong style="color:#28b86e">{_fb_pos}</strong></span>'
+            f'<span>😐 Útil <strong style="color:#d4a020">{_fb_neu}</strong></span>'
+            f'<span>😞 No útil <strong style="color:#e84040">{_fb_neg}</strong></span>'
+            f'</div></div>',
+            unsafe_allow_html=True)
+
     st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
 
     # ── Tabla de consultas ────────────────────────────────────────────────────
@@ -2123,7 +2281,6 @@ elif st.session_state.pantalla == "home":
     function equalBoxes() {
       var marker = window.parent.document.getElementById('hm-pair-start');
       if (!marker) return;
-      // Subir al contenedor padre (stVerticalBlock) y buscar el stHorizontalBlock siguiente
       var el = marker;
       for (var i = 0; i < 6; i++) { el = el.parentElement; if (!el) return; }
       var block = el.querySelector('[data-testid="stHorizontalBlock"]');
@@ -2139,6 +2296,26 @@ elif st.session_state.pantalla == "home":
     setTimeout(equalBoxes, 80);
     setTimeout(equalBoxes, 300);
     setTimeout(equalBoxes, 700);
+
+    // ── Animación D: cascade de botones de síntoma ───────────────────────────
+    function cascadeSympBtns() {
+      var btns = window.parent.document.querySelectorAll('[data-testid^="stButton-sym_"] button');
+      if (!btns.length) return;
+      btns.forEach(function(btn, i) {
+        btn.style.opacity = '0';
+        btn.style.transform = 'translateY(14px) scale(.97)';
+        btn.style.transition = 'opacity .32s ease ' + (0.04 + i * 0.055) + 's, transform .32s cubic-bezier(.22,.68,0,1.2) ' + (0.04 + i * 0.055) + 's';
+      });
+      requestAnimationFrame(function() {
+        btns.forEach(function(btn, i) {
+          setTimeout(function() {
+            btn.style.opacity = '1';
+            btn.style.transform = 'translateY(0) scale(1)';
+          }, 40 + i * 55);
+        });
+      });
+    }
+    setTimeout(cascadeSympBtns, 120);
     </script>
     """, height=0)
 
@@ -2180,6 +2357,9 @@ elif st.session_state.pantalla == "home":
             ir("pin")
 
     # ── Banner informativo ────────────────────────────────────────────────────
+    _stats_home  = obtener_stats()
+    _total_pac   = _stats_home["total"]
+    _pac_txt     = f"👥 {_total_pac:,} pacientes atendidos".replace(",", ".")
     ia_dot = "green" if tiene_ia_real() else ""
     ia_lbl = t('hm_ia_on') if tiene_ia_real() else t('hm_ia_off')
     st.markdown(f"""
@@ -2192,6 +2372,7 @@ elif st.session_state.pantalla == "home":
       <div class="hm-caps">
         <div class="hm-cap"><span class="hm-cap-dot {ia_dot}"></span>{ia_lbl}</div>
         <div class="hm-cap"><span class="hm-cap-dot green"></span>{t('hm_cap_time')}</div>
+        <div class="hm-cap"><span class="hm-cap-dot green"></span>{_pac_txt}</div>
         <div class="hm-cap"><span class="hm-cap-dot"></span>{t('hm_cap_pdf')}</div>
       </div>
     </div>
@@ -2453,12 +2634,20 @@ elif st.session_state.pantalla == "resultado":
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # — Fila de stats (HTML grid sin columnas Streamlit → sin solapes) —
+    # — Fiabilidad del triaje (F) —
+    _n_resp       = len(st.session_state.respuestas)
+    _n_total_q    = len(obtener_preguntas(sintoma))
+    _fiabilidad   = int(_n_resp / _n_total_q * 100) if _n_total_q > 0 else 100
+    _conf_lbl     = "Alta" if _fiabilidad >= 80 else "Media" if _fiabilidad >= 50 else "Limitada"
+    _conf_color   = "#28b86e" if _fiabilidad >= 80 else "#d4a020" if _fiabilidad >= 50 else "#e87228"
+    _conf_icon    = "✅" if _fiabilidad >= 80 else "⚠️" if _fiabilidad >= 50 else "📊"
+
+    # — Fila de stats ampliada a 4 columnas —
     st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+    <div class="rx-stat-4">
       <div class="rx-stat">
         <div class="rx-stat-l">{t('rx_sintoma')}</div>
-        <div class="rx-stat-v" style="font-size:.83rem;line-height:1.3;">{sintoma}</div>
+        <div class="rx-stat-v" style="font-size:.78rem;line-height:1.3;">{sintoma}</div>
       </div>
       <div class="rx-stat">
         <div class="rx-stat-l">{t('rx_punt')}</div>
@@ -2467,6 +2656,15 @@ elif st.session_state.pantalla == "resultado":
       <div class="rx-stat">
         <div class="rx-stat-l">{t('rx_grav')}</div>
         <div class="rx-stat-v" style="color:{e['txt']};">{porcentaje}%</div>
+      </div>
+      <div class="rx-stat">
+        <div class="rx-stat-l">Fiabilidad</div>
+        <div class="rx-stat-v" style="color:{_conf_color};font-size:.9rem;">
+          {_conf_icon} {_conf_lbl}
+        </div>
+        <div style="font-size:.63rem;color:var(--txt3);margin-top:2px;">
+          {_n_resp}/{_n_total_q} preguntas
+        </div>
       </div>
     </div>""", unsafe_allow_html=True)
 
@@ -2485,10 +2683,36 @@ elif st.session_state.pantalla == "resultado":
             '⚠️ Error al generar PDF</div>', unsafe_allow_html=True,
         )
     if sc5.button(t('btn_nueva'), use_container_width=True, key="btn_nueva_top"):
-        for _k in ("_pdf", "_email_ok", "_email_err_mail", "_pdf_err", "webhook_enviado"):
+        for _k in ("_pdf", "_email_ok", "_email_err_mail", "_pdf_err", "webhook_enviado", "feedback_dado"):
             st.session_state.pop(_k, None)
         reset_triaje()
         ir("home")
+
+    # — Feedback del usuario (I) —
+    if not st.session_state.get("feedback_dado"):
+        st.markdown("""
+        <div class="nx-fb-row">
+          <span class="nx-fb-lbl">¿Te ha resultado útil este triaje?</span>
+        </div>""", unsafe_allow_html=True)
+        _fb1, _fb2, _fb3, _fb_sp = st.columns([1, 1, 1, 3])
+        _tok_fb = st.session_state.get("token_informe")
+        if _fb1.button("😊 Muy útil", use_container_width=True, key="fb_pos"):
+            guardar_feedback("positivo", _tok_fb)
+            st.session_state["feedback_dado"] = True
+            st.rerun()
+        if _fb2.button("😐 Útil", use_container_width=True, key="fb_neu"):
+            guardar_feedback("neutral", _tok_fb)
+            st.session_state["feedback_dado"] = True
+            st.rerun()
+        if _fb3.button("😞 No útil", use_container_width=True, key="fb_neg"):
+            guardar_feedback("negativo", _tok_fb)
+            st.session_state["feedback_dado"] = True
+            st.rerun()
+    else:
+        st.markdown("""
+        <div class="nx-fb-ok">
+          🙏 ¡Gracias por tu valoración! Nos ayuda a mejorar NexaCare.
+        </div>""", unsafe_allow_html=True)
 
     # — Notificación email —
     if st.session_state.get("_email_ok"):
