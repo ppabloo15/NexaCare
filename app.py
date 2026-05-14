@@ -1164,17 +1164,17 @@ iframe { border: none !important; display: block !important; }
 #nx-landing-cta button:focus,
 #nx-landing-cta [data-testid="baseButton-primary"] {
   background: linear-gradient(135deg,#1a5fc8 0%,#3d8ef8 45%,#5ba8ff 100%) !important;
-  color: #fff !important; border: none !important; border-radius: 16px !important;
-  min-height: 60px !important; font-size: 1.12rem !important; font-weight: 800 !important;
+  color: #fff !important; border: none !important; border-radius: 14px !important;
+  min-height: 52px !important; font-size: 1.05rem !important; font-weight: 800 !important;
   letter-spacing: .03em !important;
-  box-shadow: 0 10px 36px rgba(61,142,248,.55), 0 0 0 0 rgba(61,142,248,.2) !important;
+  box-shadow: 0 10px 36px rgba(61,142,248,.55) !important;
   transition: transform .18s, box-shadow .18s !important;
-  width: 100% !important; outline: none !important;
+  outline: none !important;
 }
 #nx-landing-cta button:hover,
 #nx-landing-cta [data-testid="baseButton-primary"]:hover {
   transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 18px 50px rgba(61,142,248,.7), 0 0 60px rgba(61,142,248,.2) !important;
+  box-shadow: 0 18px 50px rgba(61,142,248,.7) !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -1210,8 +1210,8 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   margin-bottom:18px;animation:up .5s cubic-bezier(.22,.68,0,1.2) both .05s;}
 .bdot{width:6px;height:6px;border-radius:50%;background:#3d8ef8;
   box-shadow:0 0 8px #3d8ef8;animation:glow 2s ease-in-out infinite;}
-.logo{font-size:clamp(2.2rem,3.6vw,3.4rem);font-weight:900;letter-spacing:-2px;
-  line-height:.95;margin-bottom:14px;white-space:nowrap;
+.logo{font-size:clamp(2.8rem,4.4vw,4.2rem);font-weight:900;letter-spacing:-2px;
+  line-height:.95;margin-bottom:16px;white-space:nowrap;
   animation:up .7s cubic-bezier(.22,.68,0,1.2) both .12s;}
 .logo-nexa{color:#e2eaf6;}
 .logo-care{background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);
@@ -1220,10 +1220,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .logo-cross{color:#3d8ef8;font-weight:900;margin-right:2px;
   text-shadow:0 0 18px rgba(61,142,248,.9),0 0 40px rgba(61,142,248,.4);
   display:inline;}
-.sub{font-size:1rem;font-weight:600;color:#a8c8e8;line-height:1.5;max-width:420px;
-  margin-bottom:8px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
-.desc{font-size:.84rem;color:#4a6888;line-height:1.65;max-width:420px;
-  margin-bottom:20px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
+.sub{font-size:1.15rem;font-weight:600;color:#a8c8e8;line-height:1.5;max-width:480px;
+  margin-bottom:10px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
+.desc{font-size:.92rem;color:#4a6888;line-height:1.7;max-width:480px;
+  margin-bottom:24px;animation:up .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
 .steps{display:flex;flex-direction:column;gap:9px;
   animation:up .6s cubic-bezier(.22,.68,0,1.2) both .34s;}
 .step{display:flex;align-items:center;gap:12px;}
@@ -1231,7 +1231,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:rgba(61,142,248,.12);border:1px solid rgba(61,142,248,.3);
   color:#3d8ef8;font-size:.75rem;font-weight:800;
   display:flex;align-items:center;justify-content:center;}
-.step-t{font-size:.85rem;color:#7a9ab8;}
+.step-t{font-size:.95rem;color:#7a9ab8;}
 .step-t strong{color:#c8dff2;font-weight:700;}
 .foot{font-size:.7rem;color:#2e4a66;margin-top:16px;
   animation:up .4s ease both .7s;}
@@ -1367,14 +1367,16 @@ setTimeout(function(){
 </body>
 </html>"""
 
-    components.html(_LANDING_HTML, height=620, scrolling=False)
+    components.html(_LANDING_HTML, height=740, scrolling=False)
 
-    # Botón CTA — botón Streamlit REAL, un solo click, siempre funciona
-    st.markdown('<div id="nx-landing-cta" style="padding:10px 48px 24px 48px;background:#060f1e;">', unsafe_allow_html=True)
-    if st.button("🩺 Iniciar triaje ahora", use_container_width=True,
-                 type="primary", key="btn_landing_start"):
-        st.session_state["_from_landing"] = True
-        ir("home")
+    # Botón CTA — centrado, compacto, azul
+    st.markdown('<div id="nx-landing-cta" style="display:flex;justify-content:center;padding:0 0 0 0;margin-top:-4px;background:#060f1e;">', unsafe_allow_html=True)
+    _, _col_btn, _ = st.columns([2, 3, 2])
+    with _col_btn:
+        if st.button("🩺 Iniciar triaje ahora", use_container_width=True,
+                     type="primary", key="btn_landing_start"):
+            st.session_state["_from_landing"] = True
+            ir("home")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
