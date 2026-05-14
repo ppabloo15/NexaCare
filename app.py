@@ -100,14 +100,14 @@ html, body, .stApp { background: var(--bg) !important; color: var(--txt) !import
   100% { box-shadow: 0 0 0 0 rgba(232,64,64,0); }
 }
 .nx-hero-rojo { animation: popIn .4s cubic-bezier(.22,.68,0,1.2) both, pulse-rojo 1.8s ease-out .5s infinite !important; }
-.block-container { padding: 12px 24px 32px 24px !important; max-width: 1180px !important; }
+.block-container { padding: 6px 32px 16px 32px !important; max-width: 1400px !important; }
 
 /* ── Streamlit inputs ── */
 div.stTextInput > div > div > input {
   background: var(--bg) !important; border: 1px solid var(--bdr) !important;
   border-radius: 8px !important; color: var(--txt) !important;
-  font-family: 'DM Sans', sans-serif !important; font-size: 0.9em !important;
-  padding: 9px 13px !important; transition: border-color .2s, box-shadow .2s !important;
+  font-family: 'DM Sans', sans-serif !important; font-size: 1rem !important;
+  padding: 10px 14px !important; transition: border-color .2s, box-shadow .2s !important;
 }
 div.stTextInput > div > div > input:focus {
   border-color: var(--acc) !important; box-shadow: 0 0 0 3px var(--acc-g) !important;
@@ -160,9 +160,9 @@ div.stTextInput label, div.stSelectbox label {
 div.stButton > button {
   background: var(--surf) !important; color: var(--txt2) !important;
   border: 1px solid var(--bdr) !important; border-radius: 10px !important;
-  font-family: 'DM Sans', sans-serif !important; font-size: 0.88em !important;
-  font-weight: 600 !important; padding: 9px 14px !important; width: 100% !important;
-  transition: all .18s ease !important; min-height: 40px !important;
+  font-family: 'DM Sans', sans-serif !important; font-size: 0.95em !important;
+  font-weight: 600 !important; padding: 11px 16px !important; width: 100% !important;
+  transition: all .18s ease !important; min-height: 44px !important;
   white-space: normal !important; line-height: 1.3 !important;
 }
 div.stButton > button:hover {
@@ -209,9 +209,9 @@ div.stInfo    { background: var(--acc-s) !important; border-color: rgba(61,142,2
 .nx-hdr {
   background: linear-gradient(135deg, #0e1a2e 0%, #122040 50%, #0e1a2e 100%);
   border: 1px solid rgba(61,142,248,.16);
-  border-radius: 18px;
-  padding: 14px 28px;
-  margin-bottom: 18px;
+  border-radius: 14px;
+  padding: 10px 24px;
+  margin-bottom: 10px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -240,7 +240,7 @@ div.stInfo    { background: var(--acc-s) !important; border-color: rgba(61,142,2
 }
 
 .nx-logo {
-  font-size: 1.85em; font-weight: 800; letter-spacing: -1.2px;
+  font-size: 2.1em; font-weight: 800; letter-spacing: -1.2px;
   line-height: 1; white-space: nowrap;
   background: linear-gradient(135deg, #e2eaf6 30%, #7ab4f8 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -869,18 +869,6 @@ div.stButton > button[title="Analizar síntomas"] {
 .hm-how-sdesc  { font-size:.72rem; color:var(--txt3); line-height:1.5; }
 .hm-how-arrow  { font-size:1.2rem; color:var(--txt3); padding:0 6px; text-align:center; }
 
-/* ══ TOGGLE TEMA ══ */
-.nx-tema-btn {
-  position:fixed; bottom:22px; right:22px; z-index:9999;
-  width:44px; height:44px; border-radius:50%;
-  background:var(--surf); border:1.5px solid var(--bdr);
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.25rem; cursor:pointer;
-  box-shadow:0 4px 18px rgba(0,0,0,.25);
-  transition:transform .2s, box-shadow .2s;
-}
-.nx-tema-btn:hover { transform:scale(1.12); box-shadow:0 6px 24px rgba(0,0,0,.35); }
-
 /* ══ FEEDBACK ══ */
 .nx-fb-row {
   display:flex; align-items:center; gap:10px;
@@ -904,36 +892,6 @@ div.stButton > button[title="Analizar síntomas"] {
 }
 </style>
 """, unsafe_allow_html=True)
-
-# ── CSS modo claro (se inyecta DESPUÉS del CSS base para sobreescribir variables)
-if st.session_state.get("tema") == "light":
-    st.markdown("""
-<style>
-:root {
-  --bg:     #f2f6fc !important;
-  --surf:   #ffffff !important;
-  --raised: #e8f0fe !important;
-  --hover:  #dce8fc !important;
-  --bdr:    #c5d4ed !important;
-  --bdr-s:  #d5e2f5 !important;
-  --acc:    #1a5cc8 !important;
-  --acc-g:  rgba(26,92,200,0.15) !important;
-  --acc-s:  rgba(26,92,200,0.07) !important;
-  --txt:    #0d1b2e !important;
-  --txt2:   #3a5276 !important;
-  --txt3:   #7a95b8 !important;
-  --red:    #cc1f1f !important;
-  --orange: #c45e00 !important;
-  --gold:   #a07800 !important;
-  --green:  #1a8f55 !important;
-  --red-s:  rgba(204,31,31,0.08) !important;
-  --orange-s: rgba(196,94,0,0.08) !important;
-  --gold-s: rgba(160,120,0,0.08) !important;
-  --green-s: rgba(26,143,85,0.08) !important;
-}
-html, body, .stApp { background: #f2f6fc !important; color: #0d1b2e !important; }
-div.stTextInput > div > div > input { color: #0d1b2e !important; }
-</style>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TRADUCCIONES  (ES / EN)
@@ -1103,7 +1061,6 @@ _DEF = {
     "centros":          None,
     "coords_busq":      None,
     "ubicacion_busq":   "",
-    "tema":             "dark",
     "feedback_dado":    False,
 }
 for k, v in _DEF.items():
@@ -1170,36 +1127,6 @@ def badge_key(nivel: str) -> str:
     if "NARANJA"  in nivel: return "NARANJA"
     return "ROJO"
 
-
-# ── Botón flotante toggle tema (visible en todas las pantallas) ──────────────
-_tema_ico  = "☀️" if st.session_state.tema == "dark" else "🌙"
-_tema_tip  = "Modo claro" if st.session_state.tema == "dark" else "Modo oscuro"
-st.markdown(f"""
-<div style="position:fixed;bottom:22px;right:22px;z-index:9999;">
-  <form id="nx-tema-form" method="get" style="margin:0;">
-    <button class="nx-tema-btn" title="{_tema_tip}" id="nx-tema-btn-el"
-      onclick="event.preventDefault();window._nxToggleTema();">{_tema_ico}</button>
-  </form>
-</div>""", unsafe_allow_html=True)
-# El toggle real se implementa con un st.button oculto
-if st.button("tema_toggle_hidden", key="nx_tema_toggle"):
-    st.session_state.tema = "light" if st.session_state.tema == "dark" else "dark"
-    st.rerun()
-st.markdown("""<style>
-[data-testid="stButton-nx_tema_toggle"] { display:none !important; }
-</style>""", unsafe_allow_html=True)
-# JS que redirige el clic al botón real de Streamlit
-components.html("""<script>
-window._nxToggleTema = function() {
-  var btns = window.parent.document.querySelectorAll('button');
-  for(var i=0;i<btns.length;i++){
-    if(btns[i].innerText.trim()==='tema_toggle_hidden'){btns[i].click();break;}
-  }
-};
-// Conectar el botón flotante al tema toggle
-var el = window.parent.document.getElementById('nx-tema-btn-el');
-if(el){ el.onclick = function(e){ e.preventDefault(); window._nxToggleTema(); }; }
-</script>""", height=0)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HEADER — visible en todas las pantallas EXCEPTO landing
@@ -1501,7 +1428,7 @@ html,body{
 </body>
 </html>"""
 
-    components.html(_LANDING_HTML, height=700, scrolling=False)
+    components.html(_LANDING_HTML, height=780, scrolling=False)
 
     # CTA real de Streamlit — funciona siempre
     st.markdown("<div style='margin-top:-8px;'>", unsafe_allow_html=True)
@@ -1911,9 +1838,9 @@ elif st.session_state.pantalla == "home":
     .hm-hero {
       background: linear-gradient(135deg, #0d1e38 0%, #0f2244 50%, #0d1e38 100%);
       border: 1px solid var(--bdr);
-      border-radius: 16px;
-      padding: 22px 28px;
-      margin-bottom: 18px;
+      border-radius: 14px;
+      padding: 14px 22px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 20px;
@@ -1944,7 +1871,7 @@ elif st.session_state.pantalla == "home":
     }
     .hm-hero-body { flex: 1; }
     .hm-hero-title {
-      font-size: 1.5rem;
+      font-size: 1.65rem;
       font-weight: 800;
       color: var(--txt);
       letter-spacing: -.5px;
@@ -2054,12 +1981,12 @@ elif st.session_state.pantalla == "home":
       background: linear-gradient(135deg, var(--surf) 0%, rgba(19,35,60,.9) 100%) !important;
       border: 1px solid var(--bdr) !important;
       border-radius: 12px !important;
-      min-height: 68px !important;
-      font-size: .95rem !important;
+      min-height: 58px !important;
+      font-size: 1rem !important;
       font-weight: 600 !important;
       color: var(--txt) !important;
       text-align: left !important;
-      padding: 14px 16px !important;
+      padding: 12px 16px !important;
       transition: all .2s cubic-bezier(.22,.68,0,1.2) !important;
       position: relative !important;
       overflow: hidden !important;
@@ -2555,8 +2482,8 @@ elif st.session_state.pantalla == "resultado":
     _hero_cls = "nx-hero-rojo" if r["color"] == "red" else ""
     st.markdown(f"""
     <div class="{_hero_cls}" style="
-      background:{e['bg']};border:2px solid {e['bdr']};border-radius:18px;
-      padding:20px 26px 18px;margin-bottom:14px;
+      background:{e['bg']};border:2px solid {e['bdr']};border-radius:16px;
+      padding:14px 22px 12px;margin-bottom:10px;
       animation:popIn .4s cubic-bezier(.22,.68,0,1.2) both;
       position:relative;overflow:hidden;">
       <!-- Glow decorativo -->
@@ -2622,16 +2549,16 @@ elif st.session_state.pantalla == "resultado":
     _qr_img.save(_qr_buf, format="PNG")
     _qr_b64 = base64.b64encode(_qr_buf.getvalue()).decode()
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:14px;
-      background:var(--surf);border:1px solid var(--bdr);border-radius:14px;
-      padding:12px 18px;margin-bottom:10px;">
-      <img src="data:image/png;base64,{_qr_b64}" width="72" height="72"
-        style="border-radius:8px;flex-shrink:0;" alt="QR informe"/>
+    <div style="display:flex;align-items:center;gap:12px;
+      background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
+      padding:9px 16px;margin-bottom:8px;">
+      <img src="data:image/png;base64,{_qr_b64}" width="54" height="54"
+        style="border-radius:7px;flex-shrink:0;" alt="QR informe"/>
       <div>
-        <div style="font-size:.7rem;font-weight:700;color:var(--txt3);
-          text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--txt3);
+          text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
           📱 Escanea para ver este informe en tu móvil</div>
-        <div style="font-size:.78rem;color:var(--txt2);">
+        <div style="font-size:.76rem;color:var(--txt2);">
           Comparte el resultado con tu médico al instante</div>
       </div>
     </div>""", unsafe_allow_html=True)
