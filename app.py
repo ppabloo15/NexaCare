@@ -2724,12 +2724,16 @@ elif st.session_state.pantalla == "resultado":
           <div style="font-size:.84em;font-weight:700;color:#28b86e;">{t('rx_email_ok')}</div>
         </div>""", unsafe_allow_html=True)
     elif _email and st.session_state.get("webhook_enviado") and not st.session_state.get("_email_ok"):
-        st.markdown(
-            f'<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.22);'
-            f'border-radius:10px;padding:10px 16px;font-size:.82em;color:#e84040;margin-bottom:10px;">'
-            f'⚠️ No se pudo enviar el email. {st.session_state.get("_email_err_mail","")[:200]}</div>',
-            unsafe_allow_html=True,
-        )
+        _err_msg = st.session_state.get("_email_err_mail", "")
+        # Si el error es de credenciales no configuradas, no mostrar mensaje de error al usuario
+        _es_cred = any(w in _err_msg.lower() for w in ["credencial", "gmail_user", "gmail_pass", "no configurad"])
+        if not _es_cred:
+            st.markdown(
+                f'<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.22);'
+                f'border-radius:10px;padding:10px 16px;font-size:.82em;color:#e84040;margin-bottom:10px;">'
+                f'⚠️ No se pudo enviar el email a <strong>{_email}</strong>. Inténtalo de nuevo más tarde.</div>',
+                unsafe_allow_html=True,
+            )
 
     # — Columnas principales —
     col_izq, col_der = st.columns([1, 1], gap="large")
