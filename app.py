@@ -2549,34 +2549,46 @@ elif st.session_state.pantalla == "resultado":
     _qr_img.save(_qr_buf, format="PNG")
     _qr_b64 = base64.b64encode(_qr_buf.getvalue()).decode()
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:12px;
-      background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
-      padding:9px 16px;margin-bottom:8px;">
-      <img src="data:image/png;base64,{_qr_b64}" width="54" height="54"
-        style="border-radius:7px;flex-shrink:0;" alt="QR informe"/>
-      <div>
-        <div style="font-size:.68rem;font-weight:700;color:var(--txt3);
-          text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
-          📱 Escanea para ver este informe en tu móvil</div>
-        <div style="font-size:.76rem;color:var(--txt2);">
-          Comparte el resultado con tu médico al instante</div>
-      </div>
-    </div>""", unsafe_allow_html=True)
+<!-- Modal QR -->
+<div id="nx-qr-modal" onclick="this.style.display='none'"
+  style="display:none;position:fixed;inset:0;z-index:99999;
+    background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;cursor:zoom-out;">
+  <div style="background:#0d1e38;border:2px solid rgba(61,142,248,.4);
+    border-radius:20px;padding:28px;text-align:center;
+    animation:popIn .3s cubic-bezier(.22,.68,0,1.2) both;">
+    <img src="data:image/png;base64,{_qr_b64}" width="260" height="260"
+      style="border-radius:12px;display:block;" alt="QR grande"/>
+    <div style="font-size:.8rem;color:#7a95b8;margin-top:14px;">
+      Toca en cualquier parte para cerrar</div>
+  </div>
+</div>
 
-    # — Fiabilidad del triaje (F) —
-    _n_resp       = len(st.session_state.respuestas)
-    _n_total_q    = len(obtener_preguntas(sintoma))
-    _fiabilidad   = int(_n_resp / _n_total_q * 100) if _n_total_q > 0 else 100
-    _conf_lbl     = "Alta" if _fiabilidad >= 80 else "Media" if _fiabilidad >= 50 else "Limitada"
-    _conf_color   = "#28b86e" if _fiabilidad >= 80 else "#d4a020" if _fiabilidad >= 50 else "#e87228"
-    _conf_icon    = "✅" if _fiabilidad >= 80 else "⚠️" if _fiabilidad >= 50 else "📊"
+<div style="display:flex;align-items:center;gap:12px;
+  background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
+  padding:9px 16px;margin-bottom:8px;">
+  <img src="data:image/png;base64,{_qr_b64}" width="54" height="54"
+    onclick="var m=document.getElementById('nx-qr-modal');m.style.display='flex';"
+    style="border-radius:7px;flex-shrink:0;cursor:zoom-in;
+      transition:transform .2s;box-shadow:0 0 0 0 rgba(61,142,248,.4);"
+    onmouseover="this.style.transform='scale(1.08)';this.style.boxShadow='0 0 0 3px rgba(61,142,248,.4)'"
+    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'"
+    alt="QR informe — clic para ampliar"/>
+  <div>
+    <div style="font-size:.68rem;font-weight:700;color:var(--txt3);
+      text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
+      📱 Escanea para ver este informe en tu móvil</div>
+    <div style="font-size:.76rem;color:var(--txt2);">
+      Pulsa el QR para ampliarlo · Comparte con tu médico al instante</div>
+  </div>
+</div>""", unsafe_allow_html=True)
 
-    # — Fila de stats ampliada a 4 columnas —
+    # — Fila de stats (3 columnas) —
     st.markdown(f"""
-    <div class="rx-stat-4">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
       <div class="rx-stat">
         <div class="rx-stat-l">{t('rx_sintoma')}</div>
-        <div class="rx-stat-v" style="font-size:.78rem;line-height:1.3;">{sintoma}</div>
+        <div class="rx-stat-v" style="font-size:.83rem;line-height:1.3;">{sintoma}</div>
       </div>
       <div class="rx-stat">
         <div class="rx-stat-l">{t('rx_punt')}</div>
@@ -2585,15 +2597,6 @@ elif st.session_state.pantalla == "resultado":
       <div class="rx-stat">
         <div class="rx-stat-l">{t('rx_grav')}</div>
         <div class="rx-stat-v" style="color:{e['txt']};">{porcentaje}%</div>
-      </div>
-      <div class="rx-stat">
-        <div class="rx-stat-l">Fiabilidad</div>
-        <div class="rx-stat-v" style="color:{_conf_color};font-size:.9rem;">
-          {_conf_icon} {_conf_lbl}
-        </div>
-        <div style="font-size:.63rem;color:var(--txt3);margin-top:2px;">
-          {_n_resp}/{_n_total_q} preguntas
-        </div>
       </div>
     </div>""", unsafe_allow_html=True)
 
