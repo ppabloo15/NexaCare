@@ -1383,16 +1383,58 @@ setTimeout(function(){
 
     components.html(_LANDING_HTML, height=740, scrolling=False)
 
-    # Botón CTA — centrado, compacto, azul
-    st.markdown('<div id="nx-landing-cta" style="display:flex;justify-content:center;padding:0 0 0 0;margin-top:-4px;background:#060f1e;">', unsafe_allow_html=True)
+    # Botón CTA — centrado
+    st.markdown('<div id="nx-landing-cta" style="display:flex;justify-content:center;margin-top:-4px;background:#060f1e;padding:0;">', unsafe_allow_html=True)
     _, _col_btn, _ = st.columns([2, 3, 2])
     with _col_btn:
-        if st.button("🩺 Iniciar triaje ahora", use_container_width=True,
+        if st.button("🩺  INICIAR TRIAJE AHORA", use_container_width=True,
                      type="primary", key="btn_landing_start"):
             st.session_state["_from_landing"] = True
             ir("home")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # Inyectar CSS del botón en el padre DESPUÉS de que Streamlit cargue sus estilos
+    components.html("""<script>
+(function(){
+  var doc = window.parent.document;
+  var id = 'nx-cta-style';
+  if (doc.getElementById(id)) return;
+  var s = doc.createElement('style');
+  s.id = id;
+  s.textContent = `
+    @keyframes nxCtaPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(93,168,255,.55), 0 8px 28px rgba(30,100,220,.5); }
+      65%  { box-shadow: 0 0 0 16px rgba(93,168,255,0), 0 8px 28px rgba(30,100,220,.5); }
+      100% { box-shadow: 0 0 0 0 rgba(93,168,255,0),  0 8px 28px rgba(30,100,220,.5); }
+    }
+    #nx-landing-cta button {
+      background: linear-gradient(135deg, #0f4fc4 0%, #2874f0 50%, #60b0ff 100%) !important;
+      border: none !important;
+      border-radius: 50px !important;
+      color: #fff !important;
+      font-size: 1rem !important;
+      font-weight: 900 !important;
+      letter-spacing: .12em !important;
+      min-height: 54px !important;
+      padding: 0 52px !important;
+      animation: nxCtaPulse 2s ease-out infinite !important;
+      transition: transform .15s, filter .15s !important;
+      outline: none !important;
+      cursor: pointer !important;
+    }
+    #nx-landing-cta button:hover {
+      transform: translateY(-4px) scale(1.05) !important;
+      filter: brightness(1.18) !important;
+      animation: none !important;
+      box-shadow: 0 22px 60px rgba(40,116,240,.8) !important;
+    }
+    #nx-landing-cta button:active {
+      transform: scale(.97) !important;
+    }
+  `;
+  doc.head.appendChild(s);
+})();
+</script>""", height=0)
 
     # ── bloque landing terminado ──
 
