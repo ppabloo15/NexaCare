@@ -51,7 +51,7 @@ def _get_pin() -> str:
         return "6825"
 
 PIN_ADMIN = _get_pin()
-NEXACARE_URL = os.environ.get("NEXACARE_URL", "http://localhost:8501").rstrip("/")
+NEXACARE_URL = os.environ.get("NEXACARE_URL", "https://nexacaretfg.streamlit.app").rstrip("/")
 
 init_db()
 
@@ -1183,245 +1183,347 @@ div[data-testid="stButton"] button[kind="primaryFormSubmit"]:hover {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
-  background:#071426;color:#e2eaf6;overflow:hidden;height:100%;
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#060f1e;color:#e2eaf6;overflow:hidden;height:100%;width:100%;
 }
 
-/* Fondo con luces animadas */
-.bg{
-  position:fixed;inset:0;z-index:0;
-  background:#071426;
-  overflow:hidden;
+/* ── FONDO ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(37,90,210,.18) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(40,184,110,.10) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 40% at 50% 50%, rgba(61,142,248,.06) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
 }
-.bg-orb{
-  position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;
-  animation:orbFloat ease-in-out infinite;
-}
-.bg-orb.o1{width:600px;height:600px;top:-100px;left:-150px;
-  background:radial-gradient(circle,rgba(37,90,210,.22),transparent 70%);
-  animation-duration:14s;}
-.bg-orb.o2{width:500px;height:500px;top:20%;right:-100px;
-  background:radial-gradient(circle,rgba(40,184,110,.10),transparent 70%);
-  animation-duration:18s;animation-delay:-6s;}
-.bg-orb.o3{width:700px;height:400px;bottom:-100px;left:30%;
-  background:radial-gradient(circle,rgba(61,142,248,.12),transparent 70%);
-  animation-duration:22s;animation-delay:-10s;}
-@keyframes orbFloat{
-  0%,100%{transform:translate(0,0) scale(1);}
-  33%    {transform:translate(30px,-20px) scale(1.05);}
-  66%    {transform:translate(-20px,15px) scale(.96);}
+/* Grid retícula tech */
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(61,142,248,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,142,248,.04) 1px, transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
 }
 
-/* Partículas */
-.pts{position:fixed;inset:0;z-index:1;pointer-events:none;}
-.pt{
-  position:absolute;border-radius:50%;background:rgba(61,142,248,.6);
-  animation:ptRise linear infinite;
-}
-@keyframes ptRise{
-  0%  {transform:translateY(100vh);opacity:0;}
-  8%  {opacity:1;}
-  92% {opacity:.3;}
-  100%{transform:translateY(-60px);opacity:0;}
-}
+/* ── LAYOUT ── */
+.root{position:relative;z-index:10;display:grid;
+  grid-template-columns:1fr 1fr;gap:0;height:100vh;width:100%;overflow:hidden;}
 
-/* Wrapper principal */
-.w{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;
-  padding:22px 32px 18px;height:100vh;overflow:hidden;width:100%;}
+/* ── LADO IZQUIERDO ── */
+.left{display:flex;flex-direction:column;justify-content:center;
+  padding:32px 40px 24px 44px;position:relative;}
 
-/* Badge */
 .badge{
-  display:inline-flex;align-items:center;gap:8px;
-  background:linear-gradient(90deg,rgba(61,142,248,.04) 0%,rgba(61,142,248,.16) 50%,rgba(61,142,248,.04) 100%);
-  background-size:300% auto;
-  border:1px solid rgba(61,142,248,.30);
-  color:#3d8ef8;padding:8px 18px;border-radius:999px;
-  font-size:.75rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  animation:fadeUp .5s cubic-bezier(.22,.68,0,1.2) both .05s, shimmer 3s linear infinite;
-  margin-bottom:14px;
+  display:inline-flex;align-items:center;gap:8px;width:fit-content;
+  background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.28);
+  color:#5ba8ff;padding:6px 16px;border-radius:999px;
+  font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:22px;
+  animation:up .5s cubic-bezier(.22,.68,0,1.2) both .05s;
 }
 .bdot{width:7px;height:7px;border-radius:50%;background:#3d8ef8;
-  box-shadow:0 0 8px #3d8ef8,0 0 18px rgba(61,142,248,.55);
-  animation:pdot 2s ease-in-out infinite;}
+  box-shadow:0 0 8px #3d8ef8;animation:glow 2s ease-in-out infinite;}
 
-/* Título */
-.title{
-  font-size:clamp(3.4rem,8vw,5.8rem);font-weight:900;
-  letter-spacing:-4px;line-height:.88;text-align:center;
-  color:#e2eaf6;
-  animation:fadeUp .8s cubic-bezier(.22,.68,0,1.2) both .12s, titleFloat 6s ease-in-out 1.5s infinite;
-  margin-bottom:13px;
+.logo{
+  font-size:clamp(3.2rem,5.5vw,5.2rem);font-weight:900;
+  letter-spacing:-3px;line-height:.9;margin-bottom:16px;
+  animation:up .7s cubic-bezier(.22,.68,0,1.2) both .12s;
 }
-.title .bl{
-  color:transparent;
-  background:linear-gradient(135deg,#5ba8ff 0%,#3d8ef8 40%,#7fc3ff 100%);
-  background-size:200% auto;
-  -webkit-background-clip:text;background-clip:text;
-  animation:blShimmer 4s linear infinite;
+.logo-nexa{color:#e2eaf6;}
+.logo-care{
+  background:linear-gradient(135deg,#5ba8ff,#3d8ef8,#7fc3ff);
+  background-size:200%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 3.5s linear infinite;
 }
-.sub{
-  font-size:1.05rem;font-weight:500;color:#7a95b8;text-align:center;
-  max-width:700px;line-height:1.5;margin-bottom:8px;
-  animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) both .22s;
+.logo-cross{
+  display:inline-block;width:.18em;height:.9em;background:#3d8ef8;
+  border-radius:2px;margin-right:4px;vertical-align:middle;
+  box-shadow:0 0 18px rgba(61,142,248,.8);
+  animation:crossPop .5s cubic-bezier(.22,.68,0,1.2) both .05s;
+  position:relative;
 }
-.desc{
-  font-size:.88rem;color:#4a6480;line-height:1.7;text-align:center;
-  max-width:800px;margin-bottom:16px;
-  animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) both .30s;
+.logo-cross::after{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:.9em;height:.18em;background:#3d8ef8;border-radius:2px;
 }
 
-/* Chips */
-.chips{
-  display:flex;justify-content:center;flex-wrap:wrap;gap:10px;
-  margin-bottom:18px;
-  animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) both .38s;
-}
-.chip{
-  padding:8px 18px;border-radius:999px;font-size:.83rem;font-weight:700;
-  background:rgba(255,255,255,.02);display:inline-flex;align-items:center;gap:8px;
-  transition:transform .2s;cursor:default;
-}
-.chip:hover{transform:translateY(-2px);}
-.cd{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.cv{border:1px solid rgba(40,184,110,.5);color:#5dd898;}
-.cv .cd{background:#28b86e;box-shadow:0 0 7px #28b86e;animation:pdot 2.2s ease-in-out infinite;}
-.ca{border:1px solid rgba(212,160,32,.5);color:#f0c040;}
-.ca .cd{background:#d4a020;box-shadow:0 0 7px #d4a020;animation:pdot 2.2s ease-in-out .55s infinite;}
-.cn{border:1px solid rgba(232,114,40,.5);color:#ff9f5c;}
-.cn .cd{background:#e87228;box-shadow:0 0 7px #e87228;animation:pdot 2.2s ease-in-out 1.1s infinite;}
-.cr{border:1px solid rgba(232,64,64,.5);color:#ff7070;}
-.cr .cd{background:#e84040;box-shadow:0 0 7px #e84040;animation:pdot 2.2s ease-in-out 1.65s infinite;}
+.sub{font-size:1.1rem;font-weight:600;color:#a8c8e8;line-height:1.5;
+  max-width:440px;margin-bottom:10px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .20s;}
+.desc{font-size:.88rem;color:#4a6888;line-height:1.7;max-width:440px;
+  margin-bottom:24px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .28s;}
 
-/* Cards */
-.cards{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
-  width:100%;max-width:100%;margin-bottom:18px;
-}
-.card{
-  background:rgba(11,22,44,.82);border:1px solid rgba(61,142,248,.16);
-  border-radius:16px;padding:20px 18px;
-  backdrop-filter:blur(10px);
-  transition:transform .22s cubic-bezier(.22,.68,0,1.2),border-color .22s,box-shadow .22s,background .22s;
-  animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) both;
-}
-.card:nth-child(1){animation-delay:.50s;}
-.card:nth-child(2){animation-delay:.62s;}
-.card:nth-child(3){animation-delay:.74s;}
-.card:hover{
-  transform:translateY(-8px) scale(1.02);
-  border-color:rgba(61,142,248,.50);
-  box-shadow:0 20px 48px rgba(0,0,0,.35),0 0 36px rgba(61,142,248,.10);
-  background:rgba(16,34,68,.92);
-}
-.ci{
-  width:44px;height:44px;border-radius:12px;
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .34s;}
+.step{display:flex;align-items:center;gap:14px;}
+.step-n{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:rgba(61,142,248,.12);border:1px solid rgba(61,142,248,.3);
+  color:#3d8ef8;font-size:.78rem;font-weight:800;
   display:flex;align-items:center;justify-content:center;
-  font-size:1.4rem;margin-bottom:12px;
 }
-.ci.g{background:rgba(40,184,110,.1);border:1px solid rgba(40,184,110,.2);}
-.ci.b{background:rgba(61,142,248,.1);border:1px solid rgba(61,142,248,.2);}
-.ci.p{background:rgba(140,100,240,.1);border:1px solid rgba(140,100,240,.2);}
-.ct{font-size:1rem;font-weight:700;color:#dce8f6;margin-bottom:7px;letter-spacing:-.2px;}
-.cd2{color:#4a6480;font-size:.83rem;line-height:1.65;}
+.step-t{font-size:.88rem;color:#7a9ab8;}
+.step-t strong{color:#c8dff2;font-weight:700;}
 
-/* Separador */
-.sep{
-  width:100%;max-width:980px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(61,142,248,.3),transparent);
-  margin-bottom:16px;
-  animation:fadeUp .4s ease both .80s;
+.foot{font-size:.73rem;color:#2e4a66;margin-top:8px;
+  animation:up .4s ease both .7s;}
+
+/* ── LADO DERECHO ── */
+.right{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:28px 44px 24px 32px;gap:14px;position:relative;
 }
+/* Línea separadora vertical */
+.right::before{
+  content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(61,142,248,.25),transparent);
+}
+
+/* EKG / Monitor */
+.monitor{
+  background:rgba(6,15,30,.9);border:1px solid rgba(61,142,248,.2);
+  border-radius:16px;padding:16px 20px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .4s;
+  position:relative;overflow:hidden;
+}
+.monitor::before{
+  content:'● REC';position:absolute;top:12px;right:14px;
+  font-size:.65rem;font-weight:700;color:#e84040;letter-spacing:.08em;
+  animation:recBlink 1.4s ease-in-out infinite;
+}
+.mon-title{font-size:.65rem;font-weight:700;color:#3d5470;
+  text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;}
+.ekg-wrap{height:52px;overflow:hidden;position:relative;}
+canvas#ekg{display:block;}
+
+/* Niveles de triaje */
+.niveles{display:flex;flex-direction:column;gap:8px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .5s;}
+.nivel-row{
+  background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.1);
+  border-radius:12px;padding:12px 16px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color .2s,background .2s;
+}
+.nivel-row:hover{border-color:rgba(61,142,248,.3);background:rgba(10,22,45,.9);}
+.nivel-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;animation:glow 2s ease-in-out infinite;}
+.nivel-info{flex:1;}
+.nivel-name{font-size:.88rem;font-weight:700;margin-bottom:4px;}
+.nivel-bar-track{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
+.nivel-bar-fill{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.22,.68,0,1.2);}
+.nivel-pct{font-size:.78rem;font-weight:800;flex-shrink:0;min-width:36px;text-align:right;}
+
+/* Stats row */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  animation:up .6s cubic-bezier(.22,.68,0,1.2) both .62s;}
+.stat{
+  background:rgba(6,15,30,.8);border:1px solid rgba(61,142,248,.12);
+  border-radius:12px;padding:12px 14px;text-align:center;
+}
+.stat-v{font-size:1.5rem;font-weight:900;color:#e2eaf6;letter-spacing:-1px;line-height:1;}
+.stat-l{font-size:.62rem;font-weight:700;color:#3d5470;text-transform:uppercase;
+  letter-spacing:.1em;margin-top:4px;}
 
 /* Aviso */
 .aviso{
-  display:inline-flex;align-items:center;gap:8px;
-  background:rgba(212,160,32,.06);border:1px solid rgba(212,160,32,.22);
-  color:#b89030;padding:9px 18px;border-radius:10px;
-  font-size:.8rem;line-height:1.5;margin-bottom:14px;
-  animation:fadeUp .4s ease both .86s;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(212,160,32,.05);border:1px solid rgba(212,160,32,.18);
+  color:#9a7828;padding:8px 14px;border-radius:10px;
+  font-size:.75rem;line-height:1.45;
+  animation:up .4s ease both .72s;
 }
 
-/* Footer */
-.foot{
-  text-align:center;
-  animation:fadeUp .4s ease both .92s;
-}
-.ft{font-size:.82rem;font-weight:700;color:#8aa3c7;}
-.fs{font-size:.74rem;color:#2e4a66;margin-top:2px;}
-
-/* Keyframes */
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(22px);}
+/* Animaciones */
+@keyframes up{
+  from{opacity:0;transform:translateY(20px);}
   to  {opacity:1;transform:translateY(0);}
 }
-@keyframes titleFloat{
-  0%,100%{transform:translateY(0);}
-  50%    {transform:translateY(-10px);}
-}
-@keyframes shimmer{
-  0%  {background-position:-300% center;}
-  100%{background-position: 300% center;}
-}
-@keyframes blShimmer{
-  0%  {background-position:0% center;}
+@keyframes shine{
+  0%{background-position:0% center;}
   100%{background-position:200% center;}
 }
-@keyframes pdot{
-  0%,100%{box-shadow:0 0 5px currentColor,0 0 10px currentColor;}
-  50%    {box-shadow:0 0 9px currentColor,0 0 22px currentColor,0 0 38px currentColor;}
+@keyframes glow{
+  0%,100%{box-shadow:0 0 5px currentColor;}
+  50%{box-shadow:0 0 14px currentColor,0 0 28px currentColor;}
+}
+@keyframes recBlink{
+  0%,100%{opacity:1;}50%{opacity:.25;}
+}
+@keyframes crossPop{
+  0%{transform:scaleY(0);}
+  100%{transform:scaleY(1);}
 }
 </style>
 </head>
 <body>
-<div class="bg">
-  <div class="bg-orb o1"></div>
-  <div class="bg-orb o2"></div>
-  <div class="bg-orb o3"></div>
-</div>
-<div class="pts" id="pts"></div>
 
-<div class="w">
-  <div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA &nbsp;·&nbsp; TFG SMR 2025–2026</div>
+<div class="root">
+  <!-- ══ IZQUIERDA ══ -->
+  <div class="left">
+    <div class="badge"><span class="bdot"></span>Sistema de Triaje Médico con IA · TFG SMR 2025–2026</div>
 
-  <h1 class="title">Nexa<span class="bl">Care</span></h1>
-  <p class="sub">Tu asistente de triaje médico personal impulsado por IA</p>
-  <p class="desc">Responde 7 preguntas sobre tus síntomas y recibe en segundos una evaluación de urgencia, análisis con IA, recomendaciones personalizadas e informe PDF para tu médico.</p>
+    <div class="logo">
+      <span class="logo-nexa"><span class="logo-cross"></span>Nexa</span><span class="logo-care">Care</span>
+    </div>
 
-  <div class="chips">
-    <div class="chip cv"><span class="cd"></span>Verde — Leve</div>
-    <div class="chip ca"><span class="cd"></span>Amarillo — Moderado</div>
-    <div class="chip cn"><span class="cd"></span>Naranja — Urgente</div>
-    <div class="chip cr"><span class="cd"></span>Rojo — Emergencia</div>
+    <p class="sub">Tu asistente de triaje médico personal, impulsado por Inteligencia Artificial</p>
+    <p class="desc">Evalúa tus síntomas en menos de 2 minutos. Obtén tu nivel de urgencia, análisis clínico con IA y un informe PDF listo para mostrar a tu médico — sin registro, gratis.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><div class="step-t"><strong>Selecciona</strong> tu síntoma principal</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t"><strong>Responde</strong> 7 preguntas rápidas</div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-t"><strong>Recibe</strong> tu nivel de urgencia + informe IA</div></div>
+    </div>
+
+    <div class="foot">NexaCare · TFG SMR 2025–2026 · Pablo Esteban · Herramienta orientativa, no diagnóstico médico</div>
   </div>
 
-  <div class="cards">
-    <div class="card"><div class="ci g">🩺</div><div class="ct">Triaje en 2 minutos</div><div class="cd2">7 preguntas adaptadas. Sin registro. Resultado inmediato con nivel de urgencia.</div></div>
-    <div class="card"><div class="ci b">🤖</div><div class="ct">Análisis con IA</div><div class="cd2">Inteligencia artificial genera un informe personalizado con recomendaciones empáticas.</div></div>
-    <div class="card"><div class="ci p">📄</div><div class="ct">Informe PDF médico</div><div class="cd2">Descarga o recibe por email tu informe, listo para mostrárselo a tu médico.</div></div>
-  </div>
+  <!-- ══ DERECHA ══ -->
+  <div class="right">
+    <!-- Monitor EKG -->
+    <div class="monitor">
+      <div class="mon-title">Monitor de signos · NexaCare Live</div>
+      <div class="ekg-wrap">
+        <canvas id="ekg" width="480" height="52"></canvas>
+      </div>
+    </div>
 
-  <div class="sep"></div>
+    <!-- Niveles -->
+    <div class="niveles">
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#28b86e;color:#28b86e;"></div>
+        <div class="nivel-info">
+          <div class="nivel-name" style="color:#28b86e;">VERDE — Leve</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b1" style="background:#28b86e;"></div></div>
+        </div>
+        <div class="nivel-pct" style="color:#28b86e;">15%</div>
+      </div>
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#d4a020;color:#d4a020;"></div>
+        <div class="nivel-info">
+          <div class="nivel-name" style="color:#d4a020;">AMARILLO — Moderado</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b2" style="background:#d4a020;"></div></div>
+        </div>
+        <div class="nivel-pct" style="color:#d4a020;">45%</div>
+      </div>
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#e87228;color:#e87228;"></div>
+        <div class="nivel-info">
+          <div class="nivel-name" style="color:#e87228;">NARANJA — Urgente</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b3" style="background:#e87228;"></div></div>
+        </div>
+        <div class="nivel-pct" style="color:#e87228;">70%</div>
+      </div>
+      <div class="nivel-row">
+        <div class="nivel-dot" style="background:#e84040;color:#e84040;animation:glow 1s ease-in-out infinite;"></div>
+        <div class="nivel-info">
+          <div class="nivel-name" style="color:#e84040;">ROJO — Emergencia</div>
+          <div class="nivel-bar-track"><div class="nivel-bar-fill" id="b4" style="background:#e84040;"></div></div>
+        </div>
+        <div class="nivel-pct" style="color:#e84040;">95%</div>
+      </div>
+    </div>
 
-  <div class="aviso">⚠️&nbsp; Herramienta orientativa — No sustituye la valoración médica profesional</div>
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-v">⚡</div>
+        <div class="stat-l">&lt; 2 min resultado</div>
+      </div>
+      <div class="stat">
+        <div class="stat-v">🤖</div>
+        <div class="stat-l">IA Groq + Claude</div>
+      </div>
+      <div class="stat">
+        <div class="stat-v">📄</div>
+        <div class="stat-l">Informe PDF</div>
+      </div>
+    </div>
 
-  <div class="foot">
-    <div class="ft">NexaCare — Proyecto de Fin de Grado &nbsp;·&nbsp; SMR 2025–2026 &nbsp;·&nbsp; Pablo Esteban</div>
-    <div class="fs">Técnico Superior en Sistemas Microinformáticos y Redes</div>
+    <div class="aviso">⚠️ Herramienta orientativa — No sustituye la valoración médica profesional</div>
   </div>
 </div>
 
 <script>
+// ── Barras de nivel con animación al cargar ──────────────────────────────────
+setTimeout(function(){
+  document.getElementById('b1').style.width='15%';
+  document.getElementById('b2').style.width='45%';
+  document.getElementById('b3').style.width='70%';
+  document.getElementById('b4').style.width='95%';
+}, 600);
+
+// ── EKG animado en canvas ────────────────────────────────────────────────────
 (function(){
-  var c=document.getElementById('pts');
-  for(var i=0;i<22;i++){
-    var p=document.createElement('div');
-    p.className='pt';
-    var sz=Math.random()*3.5+1.5;
-    p.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*16+10)+'s;animation-delay:-'+(Math.random()*18)+'s;opacity:'+(Math.random()*.4+.15);
-    c.appendChild(p);
+  var cv = document.getElementById('ekg');
+  if(!cv) return;
+  var ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  var pts = [], speed = 2.2, x = 0;
+
+  // Generar forma EKG una vez
+  function ekgY(t){
+    var cycle = t % 120;
+    if(cycle < 20) return H/2 + Math.sin(cycle/20*Math.PI)*4;
+    if(cycle < 30) return H/2 - 22;
+    if(cycle < 36) return H/2 + 14;
+    if(cycle < 42) return H/2 - 18;
+    if(cycle < 50) return H/2 + 6;
+    if(cycle < 65) return H/2 + Math.sin((cycle-65)/15*Math.PI)*5;
+    return H/2 + Math.sin(cycle/20*Math.PI)*2;
   }
+
+  var t = 0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // Línea de fondo
+    ctx.strokeStyle='rgba(61,142,248,.08)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+
+    // EKG
+    pts.push({x: x % W, y: ekgY(t)});
+    if(pts.length > W/speed + 2) pts.shift();
+    t += speed;
+    x += speed;
+
+    ctx.lineWidth = 2;
+    var grad = ctx.createLinearGradient(0,0,W,0);
+    grad.addColorStop(0,'rgba(61,142,248,0)');
+    grad.addColorStop(0.6,'rgba(61,142,248,.8)');
+    grad.addColorStop(0.85,'rgba(40,184,110,.9)');
+    grad.addColorStop(1,'rgba(61,142,248,.2)');
+    ctx.strokeStyle = grad;
+    ctx.shadowColor = '#3d8ef8';
+    ctx.shadowBlur = 7;
+    ctx.beginPath();
+    for(var i=0;i<pts.length;i++){
+      var px = i * speed;
+      if(i===0) ctx.moveTo(px, pts[i].y);
+      else ctx.lineTo(px, pts[i].y);
+    }
+    ctx.stroke();
+
+    // Punto brillante en la punta
+    var last = pts[pts.length-1];
+    if(last){
+      ctx.beginPath();
+      ctx.arc(pts.length*speed, last.y, 3, 0, Math.PI*2);
+      ctx.fillStyle='#7fc3ff';
+      ctx.shadowBlur=12;ctx.shadowColor='#3d8ef8';
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
 })();
 </script>
 </body>
@@ -2538,8 +2640,7 @@ elif st.session_state.pantalla == "resultado":
     </script>""", height=0)
 
     # — QR dinámico escaneable —
-    _token = st.session_state.get("token_informe", "")
-    _qr_url = f"{NEXACARE_URL}/?token={_token}" if _token else NEXACARE_URL
+    _qr_url = NEXACARE_URL  # siempre apunta al app público
     _qr = qrcode.QRCode(box_size=4, border=2)
     _qr.add_data(_qr_url)
     _qr.make(fit=True)
