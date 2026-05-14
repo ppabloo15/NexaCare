@@ -1,0 +1,25 @@
+# Secretos — NUNCA subir al repositorio
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Base de datos local
+nexacare.db
+
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db

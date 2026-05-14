@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import sys; [print\\(l.rstrip\\(\\)\\) for l in sys.stdin if 'WARNING' not in l and 'streamlit' not in l.lower\\(\\)]\")",
+      "Bash(start cmd *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('pdf_report.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('ai_service.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app.py'\\).read\\(\\)\\); print\\('app.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app.py', encoding='utf-8'\\).read\\(\\)\\); print\\('app.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('pdf_report.py', encoding='utf-8'\\).read\\(\\)\\); print\\('pdf_report.py OK'\\)\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\Users\\\\pablo\\\\Desktop\\\\TFG_claudeprueba' -Recurse -Force | Select-Object FullName | Out-String -Width 300\")",
+      "PowerShell(gh --version 2>$null)",
+      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\",\"User\"\\); gh --version)"
+    ]
+  }
+}
