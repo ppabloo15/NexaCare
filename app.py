@@ -1403,12 +1403,12 @@ setTimeout(function(){
   s.id = id;
   s.textContent = `
     @keyframes nxCtaPulse {
-      0%   { box-shadow: 0 0 0 0 rgba(93,168,255,.55), 0 8px 28px rgba(30,100,220,.5); }
-      65%  { box-shadow: 0 0 0 16px rgba(93,168,255,0), 0 8px 28px rgba(30,100,220,.5); }
-      100% { box-shadow: 0 0 0 0 rgba(93,168,255,0),  0 8px 28px rgba(30,100,220,.5); }
+      0%   { box-shadow: 0 0 0 0 rgba(61,142,248,.6), 0 8px 30px rgba(61,142,248,.45); }
+      65%  { box-shadow: 0 0 0 18px rgba(61,142,248,0), 0 8px 30px rgba(61,142,248,.45); }
+      100% { box-shadow: 0 0 0 0 rgba(61,142,248,0),  0 8px 30px rgba(61,142,248,.45); }
     }
     #nx-landing-cta button {
-      background: linear-gradient(135deg, #0f4fc4 0%, #2874f0 50%, #60b0ff 100%) !important;
+      background: linear-gradient(135deg, #2d6fd4 0%, #3d8ef8 50%, #6ab4ff 100%) !important;
       border: none !important;
       border-radius: 50px !important;
       color: #fff !important;
