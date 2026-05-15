@@ -1393,46 +1393,50 @@ setTimeout(function(){
             ir("home")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Inyectar CSS del botón en el padre DESPUÉS de que Streamlit cargue sus estilos
+    # Estilizar el botón directamente por JS — busca por texto, aplica inline style
     components.html("""<script>
 (function(){
   var doc = window.parent.document;
-  var id = 'nx-cta-style';
-  if (doc.getElementById(id)) return;
-  var s = doc.createElement('style');
-  s.id = id;
-  s.textContent = `
-    @keyframes nxCtaPulse {
-      0%   { box-shadow: 0 0 0 0 rgba(61,142,248,.6), 0 8px 30px rgba(61,142,248,.45); }
-      65%  { box-shadow: 0 0 0 18px rgba(61,142,248,0), 0 8px 30px rgba(61,142,248,.45); }
-      100% { box-shadow: 0 0 0 0 rgba(61,142,248,0),  0 8px 30px rgba(61,142,248,.45); }
+
+  // Añadir keyframes una sola vez
+  if (!doc.getElementById('nx-pulse-kf')) {
+    var kf = doc.createElement('style');
+    kf.id = 'nx-pulse-kf';
+    kf.textContent = '@keyframes nxCtaPulse{0%{box-shadow:0 0 0 0 rgba(61,142,248,.65),0 8px 30px rgba(61,142,248,.4)}65%{box-shadow:0 0 0 20px rgba(61,142,248,0),0 8px 30px rgba(61,142,248,.4)}100%{box-shadow:0 0 0 0 rgba(61,142,248,0),0 8px 30px rgba(61,142,248,.4)}}';
+    doc.head.appendChild(kf);
+  }
+
+  function applyStyle() {
+    var btns = doc.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      if (b.textContent.trim().toUpperCase().includes('INICIAR TRIAJE')) {
+        b.style.setProperty('background', 'linear-gradient(135deg,#2563d4 0%,#3d8ef8 48%,#68b8ff 100%)', 'important');
+        b.style.setProperty('border', 'none', 'important');
+        b.style.setProperty('border-radius', '50px', 'important');
+        b.style.setProperty('color', '#fff', 'important');
+        b.style.setProperty('font-weight', '900', 'important');
+        b.style.setProperty('font-size', '1.02rem', 'important');
+        b.style.setProperty('letter-spacing', '.1em', 'important');
+        b.style.setProperty('min-height', '54px', 'important');
+        b.style.setProperty('animation', 'nxCtaPulse 2.2s ease-out infinite', 'important');
+        b.style.setProperty('transition', 'transform .15s,filter .15s', 'important');
+        b.style.setProperty('cursor', 'pointer', 'important');
+        b.setAttribute('data-nx-styled','1');
+        b.onmouseenter = function(){ this.style.setProperty('transform','translateY(-4px) scale(1.05)','important'); this.style.setProperty('filter','brightness(1.2)','important'); this.style.setProperty('animation','none','important'); };
+        b.onmouseleave = function(){ this.style.setProperty('transform','none','important'); this.style.setProperty('filter','none','important'); this.style.setProperty('animation','nxCtaPulse 2.2s ease-out infinite','important'); };
+        return true;
+      }
     }
-    #nx-landing-cta button {
-      background: linear-gradient(135deg, #2d6fd4 0%, #3d8ef8 50%, #6ab4ff 100%) !important;
-      border: none !important;
-      border-radius: 50px !important;
-      color: #fff !important;
-      font-size: 1rem !important;
-      font-weight: 900 !important;
-      letter-spacing: .12em !important;
-      min-height: 54px !important;
-      padding: 0 52px !important;
-      animation: nxCtaPulse 2s ease-out infinite !important;
-      transition: transform .15s, filter .15s !important;
-      outline: none !important;
-      cursor: pointer !important;
-    }
-    #nx-landing-cta button:hover {
-      transform: translateY(-4px) scale(1.05) !important;
-      filter: brightness(1.18) !important;
-      animation: none !important;
-      box-shadow: 0 22px 60px rgba(40,116,240,.8) !important;
-    }
-    #nx-landing-cta button:active {
-      transform: scale(.97) !important;
-    }
-  `;
-  doc.head.appendChild(s);
+    return false;
+  }
+
+  // Reintentar hasta encontrar el botón
+  var tries = 0;
+  function retry() {
+    if (!applyStyle() && tries++ < 20) setTimeout(retry, 200);
+  }
+  retry();
 })();
 </script>""", height=0)
 
