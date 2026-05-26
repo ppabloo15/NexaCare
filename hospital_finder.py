@@ -1,8 +1,7 @@
 """
 NexaCare — Buscador de centros sanitarios públicos
-Solo hospitales públicos y centros de salud oficiales.
-Geocoding: Nominatim con addressdetails para mayor precisión.
-Datos: Overpass API (OSM). Sin API key.
+Busca hospitales y ambulatorios/centros de salud públicos.
+Geocoding: Nominatim. Datos: Overpass API (OSM). Sin API key.
 """
 import math
 import json
@@ -12,53 +11,78 @@ import urllib.error
 
 _HEADERS = {"User-Agent": "NexaCare-TFG-SMR/2.0 (proyecto academico TFG)"}
 
-# Términos que indican centro PRIVADO → excluir siempre
-_EXCLUIR = [
+# Cadenas que indican centro PRIVADO → excluir siempre
+_PRIVADO_NOMBRE = [
     "sanitas", "quirón", "quiron", "hm hospitals", "hm ",
     "vithas", "ruber", "teknon", "cemtro", "juaneda",
-    "asisa", "adeslas", "imogas", "cuidados paliativos",
-    "psicotécnico", "psicotecnico", "dental", "dentista",
-    "veterinari", "farmacia", "óptica", "optica",
-    "estética", "estetica", "venerable orden tercera",
-    "especialidades", "privado", "privada",
+    "asisa", "adeslas", "imed",
+    "dental", "dentista", "veterinari", "farmacia",
+    "óptica", "optica", "estética", "estetica",
+    "psicotécnico", "psicotecnico",
+    "cuidados paliativos", "residencia", "geriátrico", "geriatrico",
 ]
 
-# Términos que confirman que es PÚBLICO
-_PUBLICO_KEYWORDS = [
-    "hospital universitario", "hospital general",
-    "centro de salud", "ambulatorio", "sermas",
+_PRIVADO_OPERADOR = [
+    "sanitas", "quirón", "quiron", "hm ", "vithas", "ruber",
+    "teknon", "cemtro", "asisa", "adeslas",
 ]
 
-# Operadores SNS conocidos
-_OPERADORES_PUBLICOS = [
+# Palabras que confirman que es un centro PÚBLICO
+_PUBLICO_NOMBRE = [
+    "centro de salud", "ambulatorio", "consultorio",
+    "hospital universitario", "hospital general", "hospital comarcal",
+    "hospital regional", "hospital de día", "hospital público",
+    "centro médico de urgencias", "urgencias de atención primaria",
+    "pau ", "cs ", "cap ",
+]
+
+_PUBLICO_OPERADOR = [
     "sermas", "comunidad de madrid", "insalud", "sns",
-    "salud madrid", "gobierno de españa",
+    "salud madrid", "servicio madrileño", "servicio de salud",
+    "junta de andalucía", "junta de andalucia",
+    "generalitat", "xunta", "osakidetza", "sacyl",
+    "gobierno de españa", "ministerio de sanidad",
+    "diputación", "diputacion", "ayuntamiento",
 ]
 
 
 def _es_valido(nombre: str, tags: dict) -> bool:
-    n = nombre.lower()
-    # Excluir privados por nombre
-    if any(p in n for p in _EXCLUIR):
+    n   = nombre.lower()
+    op  = tags.get("operator", "").lower()
+    amenity    = tags.get("amenity", "")
+    healthcare = tags.get("healthcare", "")
+
+    # 1. Excluir si el nombre contiene palabras de centro privado
+    if any(p in n for p in _PRIVADO_NOMBRE):
         return False
-    # Excluir por operador privado
-    op = tags.get("operator", "").lower()
-    if any(p in op for p in ["sanitas", "quirón", "quiron", "hm ", "vithas", "ruber"]):
+
+    # 2. Excluir si el operador es claramente privado
+    if any(p in op for p in _PRIVADO_OPERADOR):
         return False
-    # Aceptar si el operador es claramente público
-    if any(p in op for p in _OPERADORES_PUBLICOS):
+
+    # 3. Aceptar si el operador es claramente público
+    if any(p in op for p in _PUBLICO_OPERADOR):
         return True
-    # Aceptar hospitales y centros de salud sin nombre privado
-    amenity = tags.get("amenity", "")
-    if amenity in ("hospital", "health_post"):
+
+    # 4. Aceptar si el nombre contiene palabras de centro público
+    if any(p in n for p in _PUBLICO_NOMBRE):
         return True
+
+    # 5. Aceptar hospitales sin señales de ser privado
+    if amenity == "hospital" or healthcare == "hospital":
+        return True
+
+    # 6. Aceptar clínicas/centros de salud sin señales privadas
+    if amenity == "clinic" or healthcare in ("clinic", "centre", "health_centre"):
+        return True
+
     return False
 
 
 def geocodificar(direccion: str) -> tuple[float, float] | None:
     """
-    Geocodifica con Nominatim. Si la dirección no contiene coma
-    (sin ciudad explícita), añade ', España' para reducir ambigüedad.
+    Geocodifica con Nominatim.
+    Si no hay coma (sin ciudad explícita), añade ', España'.
     """
     addr = direccion.strip()
     if "," not in addr:
@@ -95,21 +119,31 @@ def buscar_centros(
     nivel_color: str = "green",
 ) -> list[dict]:
     """
-    Busca hospitales y centros de salud públicos cercanos.
-    Usa out center para obtener el centroide de ways/relations.
-    Filtra privados y ordena por distancia real al centroide.
-    Si el nivel es rojo/naranja, prioriza hospitales con urgencias.
+    Busca hospitales y centros de salud/ambulatorios públicos cercanos.
+    Incluye: amenity=hospital, amenity=clinic, healthcare=clinic/centre/hospital.
+    Si no hay resultados, amplía el radio a 20 km automáticamente.
+    Si nivel es rojo/naranja, prioriza hospitales con urgencias.
     """
     urgente = nivel_color in ("red", "orange")
 
-    # Query: hospitales + centros de salud en radio amplio
+    for radio in (radio_m, radio_m * 2):
+        centros = _query_centros(lat, lon, radio, urgente)
+        if centros:
+            return centros
+
+    return []
+
+
+def _query_centros(lat: float, lon: float, radio_m: int, urgente: bool) -> list[dict]:
+    """Ejecuta la consulta Overpass y devuelve los centros filtrados y ordenados."""
     query = f"""[out:json][timeout:30];
 (
-  node["amenity"="hospital"](around:{radio_m},{lat},{lon});
-  way["amenity"="hospital"](around:{radio_m},{lat},{lon});
-  relation["amenity"="hospital"](around:{radio_m},{lat},{lon});
-  node["amenity"="health_post"](around:{radio_m},{lat},{lon});
-  way["amenity"="health_post"](around:{radio_m},{lat},{lon});
+  nwr["amenity"="hospital"](around:{radio_m},{lat},{lon});
+  nwr["amenity"="clinic"](around:{radio_m},{lat},{lon});
+  nwr["healthcare"="hospital"](around:{radio_m},{lat},{lon});
+  nwr["healthcare"="clinic"](around:{radio_m},{lat},{lon});
+  nwr["healthcare"="centre"](around:{radio_m},{lat},{lon});
+  nwr["healthcare"="health_centre"](around:{radio_m},{lat},{lon});
 );
 out center tags;"""
 
@@ -134,22 +168,22 @@ out center tags;"""
     for el in result.get("elements", []):
         tags   = el.get("tags", {})
         nombre = tags.get("name", "").strip()
-        if not nombre or len(nombre) < 2:
+        if not nombre or len(nombre) < 3:
             continue
         if not _es_valido(nombre, tags):
             continue
 
-        # Obtener coordenadas del centroide (center para ways/relations)
+        # Coordenadas: nodes tienen lat/lon directo; ways/relations usan center
         if el["type"] == "node":
-            clat = el.get("lat", lat)
-            clon = el.get("lon", lon)
+            clat = el.get("lat")
+            clon = el.get("lon")
         else:
             centro = el.get("center", {})
             clat = centro.get("lat")
             clon = centro.get("lon")
-            if clat is None or clon is None:
-                continue  # Saltar elementos sin centroide
 
+        if clat is None or clon is None:
+            continue
         try:
             clat, clon = float(clat), float(clon)
             if not (-90 <= clat <= 90 and -180 <= clon <= 180):
@@ -157,19 +191,32 @@ out center tags;"""
         except (ValueError, TypeError):
             continue
 
-        dist = _haversine(lat, lon, clat, clon)
-        amenity     = tags.get("amenity", "")
-        es_hospital = amenity == "hospital"
+        dist       = _haversine(lat, lon, clat, clon)
+        amenity    = tags.get("amenity", "")
+        healthcare = tags.get("healthcare", "")
+        es_hospital = amenity == "hospital" or healthcare == "hospital"
         tiene_urg   = (
             es_hospital
             or tags.get("emergency") == "yes"
             or "urgencia" in nombre.lower()
         )
 
+        # Determinar tipo legible
+        n_lower = nombre.lower()
+        if es_hospital:
+            tipo  = "Hospital"
+            icono = "🏥"
+        elif any(p in n_lower for p in ("ambulatorio", "centro de salud", "cs ", "cap ")):
+            tipo  = "Ambulatorio"
+            icono = "🏠"
+        else:
+            tipo  = "Centro de Salud"
+            icono = "🏠"
+
         centros.append({
             "nombre":      nombre,
-            "tipo":        "Hospital" if es_hospital else "Centro de Salud",
-            "icono":       "🏥" if es_hospital else "🏠",
+            "tipo":        tipo,
+            "icono":       icono,
             "distancia_m": dist,
             "urgencias":   tiene_urg,
             "es_hospital": es_hospital,
@@ -181,13 +228,13 @@ out center tags;"""
     if not centros:
         return []
 
-    # Ordenar siempre por distancia; si urgente: hospitales primero dentro del mismo rango
+    # Ordenar: urgente → hospitales primero, luego distancia; normal → solo distancia
     if urgente:
         centros.sort(key=lambda x: (not x["es_hospital"], x["distancia_m"]))
     else:
         centros.sort(key=lambda x: x["distancia_m"])
 
-    # Deduplicar por nombre completo normalizado
+    # Deduplicar por nombre normalizado (máx 5 resultados)
     vistos: set[str] = set()
     resultado: list[dict] = []
     for c in centros:
@@ -195,7 +242,7 @@ out center tags;"""
         if key not in vistos:
             vistos.add(key)
             resultado.append(c)
-        if len(resultado) >= 4:
+        if len(resultado) >= 5:
             break
 
     return resultado
