@@ -54,10 +54,21 @@ _FONTS_OK = False
 
 def _setup(pdf: FPDF) -> bool:
     global _FONTS_OK
-    for reg, bold, ital in [
-        (r"C:\Windows\Fonts\arial.ttf",  r"C:\Windows\Fonts\arialbd.ttf",  r"C:\Windows\Fonts\ariali.ttf"),
-        (r"C:\Windows\Fonts\Arial.ttf",  r"C:\Windows\Fonts\ArialBD.ttf",  r"C:\Windows\Fonts\ArialI.ttf"),
-    ]:
+    # Candidatos: Windows (Arial) y Linux/Mac (DejaVu del sistema o de fpdf2)
+    candidates = [
+        # Windows
+        (r"C:\Windows\Fonts\arial.ttf",       r"C:\Windows\Fonts\arialbd.ttf",    r"C:\Windows\Fonts\ariali.ttf"),
+        (r"C:\Windows\Fonts\Arial.ttf",        r"C:\Windows\Fonts\ArialBD.ttf",    r"C:\Windows\Fonts\ArialI.ttf"),
+        # Linux — DejaVu instalado en el sistema
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf"),
+        # Linux alternativo (Ubuntu/Streamlit Cloud)
+        ("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",
+         "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf",
+         "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Oblique.ttf"),
+    ]
+    for reg, bold, ital in candidates:
         if os.path.exists(reg):
             try:
                 pdf.add_font("F", "",  fname=reg)
@@ -66,8 +77,8 @@ def _setup(pdf: FPDF) -> bool:
                 _FONTS_OK = True
                 return True
             except Exception as e:
-                print(f"[NexaCare PDF] Error cargando fuente Arial: {e}")
-                break
+                print(f"[NexaCare PDF] Error cargando fuente {reg}: {e}")
+    # Último recurso: DejaVu incluido en el paquete fpdf2
     try:
         import fpdf as _m
         p = os.path.dirname(_m.__file__)
@@ -905,7 +916,7 @@ def generar_pdf_admin(stats: dict, consultas: list) -> bytes:
         pdf.set_xy(M, y_r)
         _f(pdf, "", 8.5)
         pdf.set_text_color(*_C["TXT_MD"])
-        pdf.cell(50, 7, nombre)
+        pdf.cell(50, 7, _c(nombre))
         pdf.set_xy(M + W - 12, y_r)
         _f(pdf, "B", 8.5)
         pdf.set_text_color(*col)
