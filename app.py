@@ -1471,20 +1471,25 @@ if st.session_state.pantalla == "pin":
           <div class="nx-pin-dots">{_dots_html}</div>
         </div>""", unsafe_allow_html=True)
 
-        pin_v = st.text_input(
-            "PIN", type="password", placeholder="• • • •",
-            label_visibility="collapsed", key="_pin_input",
-        )
-        if st.button("🔓  Acceder al panel", use_container_width=True, type="primary"):
-            if pin_v == PIN_ADMIN:
-                st.session_state.admin_ok = True
-                st.session_state.pin_intentos = 0
-                ir("dashboard")
-            else:
-                st.session_state.pin_intentos += 1
-                n = st.session_state.pin_intentos
-                msg = f"PIN incorrecto · {'Demasiados intentos, espera un momento.' if n >= 3 else f'Intento {n}'}"
-                st.markdown(f'<div class="nx-err">🔒 {msg}</div>', unsafe_allow_html=True)
+        _bloqueado = st.session_state.get("pin_intentos", 0) >= 5
+        if _bloqueado:
+            st.markdown('<div class="nx-err">🔒 Acceso bloqueado por demasiados intentos. Vuelve al inicio para reiniciar.</div>', unsafe_allow_html=True)
+        else:
+            pin_v = st.text_input(
+                "PIN", type="password", placeholder="• • • •",
+                label_visibility="collapsed", key="_pin_input",
+            )
+            if st.button("🔓  Acceder al panel", use_container_width=True, type="primary"):
+                if pin_v == PIN_ADMIN:
+                    st.session_state.admin_ok = True
+                    st.session_state.pin_intentos = 0
+                    ir("dashboard")
+                else:
+                    st.session_state.pin_intentos += 1
+                    n = st.session_state.pin_intentos
+                    restantes = max(0, 5 - n)
+                    msg = f"PIN incorrecto · {f'{restantes} intento(s) restante(s)' if restantes > 0 else 'Acceso bloqueado.'}"
+                    st.markdown(f'<div class="nx-err">🔒 {msg}</div>', unsafe_allow_html=True)
         st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
         if st.button("← Volver al inicio", use_container_width=True):
             st.session_state.pin_intentos = 0
@@ -1494,6 +1499,9 @@ if st.session_state.pantalla == "pin":
 # ══════════════════════════════════════════════════════════════════════════════
 # PANTALLA: DASHBOARD ADMIN
 # ══════════════════════════════════════════════════════════════════════════════
+elif st.session_state.pantalla == "dashboard" and not st.session_state.admin_ok:
+    ir("pin")
+
 elif st.session_state.pantalla == "dashboard" and st.session_state.admin_ok:
 
     stats    = obtener_stats()
@@ -1613,6 +1621,7 @@ elif st.session_state.pantalla == "dashboard" and st.session_state.admin_ok:
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
         if st.button(t("adm_exit"), use_container_width=True):
             st.session_state.admin_ok = False
+            st.session_state.pop("_pdf_admin", None)
             ir("home")
 
     # ── KPIs ──────────────────────────────────────────────────────────────────
@@ -1790,16 +1799,28 @@ elif st.session_state.pantalla == "dashboard" and st.session_state.admin_ok:
     # ── Exportar PDF ──────────────────────────────────────────────────────────
     if consultas:
         col_pdf, col_sp = st.columns([3, 1])
+        with col_sp:
+            st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+            if st.button("🔄 Actualizar PDF", use_container_width=True, key="btn_adm_pdf_refresh"):
+                st.session_state.pop("_pdf_admin", None)
+                st.rerun()
         with col_pdf:
-            with st.spinner(t("adm_spin")):
-                pdf_admin = generar_pdf_admin(stats, obtener_consultas(limit=10000))
-            st.download_button(
-                t("adm_export"),
-                data=pdf_admin,
-                file_name=f"nexacare_admin_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
+            if st.session_state.get("_pdf_admin") is None:
+                with st.spinner(t("adm_spin")):
+                    try:
+                        st.session_state["_pdf_admin"] = generar_pdf_admin(
+                            stats, obtener_consultas(limit=10000)
+                        )
+                    except Exception as _adm_e:
+                        st.error(f"Error al generar PDF: {_adm_e}")
+            if st.session_state.get("_pdf_admin"):
+                st.download_button(
+                    t("adm_export"),
+                    data=st.session_state["_pdf_admin"],
+                    file_name=f"nexacare_admin_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2438,7 +2459,9 @@ elif st.session_state.pantalla == "resultado":
     informe = st.session_state.informe_ai
 
     # ── Generar PDF (una sola vez) ────────────────────────────────────────────
-    if "_pdf" not in st.session_state or st.session_state.get("_pdf") is None:
+    if "_pdf" not in st.session_state or (
+        st.session_state.get("_pdf") is None and not st.session_state.get("_pdf_err")
+    ):
         datos_pac = {
             "edad":   st.session_state.get("edad_grupo"),
             "sexo":   st.session_state.get("sexo"),
@@ -2588,15 +2611,18 @@ elif st.session_state.pantalla == "resultado":
         </div>""", unsafe_allow_html=True)
     elif _email and st.session_state.get("webhook_enviado") and not st.session_state.get("_email_ok"):
         _err_msg = st.session_state.get("_email_err_mail", "")
-        # Si el error es de credenciales no configuradas, no mostrar mensaje de error al usuario
         _es_cred = any(w in _err_msg.lower() for w in ["credencial", "gmail_user", "gmail_pass", "no configurad"])
         if not _es_cred:
-            st.markdown(
+            _ecol1, _ecol2 = st.columns([3, 1])
+            _ecol1.markdown(
                 f'<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.22);'
-                f'border-radius:10px;padding:10px 16px;font-size:.82em;color:#e84040;margin-bottom:10px;">'
-                f'⚠️ No se pudo enviar el email a <strong>{_email}</strong>. Inténtalo de nuevo más tarde.</div>',
+                f'border-radius:10px;padding:10px 16px;font-size:.82em;color:#e84040;">'
+                f'⚠️ No se pudo enviar el email a <strong>{_email}</strong>.</div>',
                 unsafe_allow_html=True,
             )
+            if _ecol2.button("🔄 Reintentar", use_container_width=True, key="btn_email_retry"):
+                st.session_state["webhook_enviado"] = False
+                st.rerun()
 
     # — Columnas principales —
     col_izq, col_der = st.columns([1, 1], gap="large")

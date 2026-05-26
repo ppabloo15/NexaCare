@@ -113,7 +113,13 @@ def _c(t: str) -> str:
     }
     for o, s in repl.items():
         t = t.replace(o, s)
-    return t if _FONTS_OK else "".join(ch if ord(ch) < 256 else "?" for ch in t)
+    if _FONTS_OK:
+        return t
+    # Sin fuente Unicode: eliminar emojis/símbolos y limpiar espacios dobles
+    cleaned = "".join(ch if ord(ch) < 256 else "" for ch in t)
+    while "  " in cleaned:
+        cleaned = cleaned.replace("  ", " ")
+    return cleaned.strip()
 
 
 def _nk(nivel: str) -> str:

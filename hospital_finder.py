@@ -136,7 +136,7 @@ def buscar_centros(
 
 def _query_centros(lat: float, lon: float, radio_m: int, urgente: bool) -> list[dict]:
     """Ejecuta la consulta Overpass y devuelve los centros filtrados y ordenados."""
-    query = f"""[out:json][timeout:30];
+    query = f"""[out:json][timeout:15];
 (
   nwr["amenity"="hospital"](around:{radio_m},{lat},{lon});
   nwr["amenity"="clinic"](around:{radio_m},{lat},{lon});
@@ -154,7 +154,7 @@ out center tags;"""
         headers={**_HEADERS, "Content-Type": "application/x-www-form-urlencoded"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
+        with urllib.request.urlopen(req, timeout=15) as r:
             result = json.loads(r.read())
     except urllib.error.URLError as e:
         print(f"[NexaCare] Error Overpass API: {e}")
